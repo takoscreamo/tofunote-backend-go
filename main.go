@@ -1,10 +1,10 @@
 package main
 
 import (
+	"emotra-backend/api/controllers"
 	"emotra-backend/api/models"
-	"emotra-backend/controllers"
-	"emotra-backend/repositories"
-	"emotra-backend/usecases"
+	"emotra-backend/api/repositories"
+	"emotra-backend/api/usecases"
 
 	"github.com/gin-gonic/gin"
 )

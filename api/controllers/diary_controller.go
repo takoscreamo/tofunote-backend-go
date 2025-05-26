@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"emotra-backend/usecases"
+	"emotra-backend/api/usecases"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
