@@ -4,8 +4,8 @@ import (
 	"emotra-backend/infra"
 
 	"emotra-backend/api/controllers"
-	"emotra-backend/api/repositories"
-	"emotra-backend/api/usecases"
+	"emotra-backend/repositories"
+	"emotra-backend/usecases"
 
 	"github.com/gin-gonic/gin"
 )

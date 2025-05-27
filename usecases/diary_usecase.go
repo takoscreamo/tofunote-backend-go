@@ -2,7 +2,7 @@ package usecases
 
 import (
 	"emotra-backend/api/models"
-	"emotra-backend/api/repositories"
+	"emotra-backend/repositories"
 )
 
 type IDiaryUsecase interface {
