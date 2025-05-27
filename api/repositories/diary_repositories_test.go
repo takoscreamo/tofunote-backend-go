@@ -48,8 +48,8 @@ func TestDiaryRepository(t *testing.T) {
 		}
 
 		expectedDiaries := []models.Diary{
-			{ID: 1, UserID: 101, Date: "2025-05-01", Mental: 5, Diary: "今日は楽しい一日だった。"},
-			{ID: 2, UserID: 102, Date: "2025-05-02", Mental: 3, Diary: "少し疲れたけど頑張った。"},
+			{Model: gorm.Model{ID: 1}, UserID: 101, Date: "2025-05-01", Mental: 5, Diary: "今日は楽しい一日だった。"},
+			{Model: gorm.Model{ID: 2}, UserID: 102, Date: "2025-05-02", Mental: 3, Diary: "少し疲れたけど頑張った。"},
 		}
 
 		for i, diary := range *result {

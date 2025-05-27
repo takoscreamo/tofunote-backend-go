@@ -4,6 +4,8 @@ import (
 	"emotra-backend/api/models"
 	"errors"
 	"testing"
+
+	"gorm.io/gorm"
 )
 
 // モックリポジトリ（IDiaryRepository の簡易実装）
@@ -19,8 +21,8 @@ func (m *mockDiaryRepository) FindAll() (*[]models.Diary, error) {
 func TestDiaryUsecase_FindAll(t *testing.T) {
 	t.Run("リポジトリから取得した値をそのまま返す", func(t *testing.T) {
 		expected := &[]models.Diary{
-			{ID: 1, UserID: 101, Date: "2025-05-01", Mental: 5, Diary: "今日は良い一日だった"},
-			{ID: 2, UserID: 102, Date: "2025-05-02", Mental: 3, Diary: "少し疲れた"},
+			{Model: gorm.Model{ID: 1}, UserID: 101, Date: "2025-05-01", Mental: 5, Diary: "今日は良い一日だった"},
+			{Model: gorm.Model{ID: 2}, UserID: 102, Date: "2025-05-02", Mental: 3, Diary: "少し疲れた"},
 		}
 
 		mockRepo := &mockDiaryRepository{diaries: expected}
