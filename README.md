@@ -17,9 +17,9 @@
 - `air init`で設定ファイルを生成
 - `air`で起動
 
-## DBマイグレーションのupコマンド
-- `migrate -database "mysql://root:password@tcp(localhost:3306)/emo_tracking" -path db/migrations up`
-- `migrate -database "mysql://root:password@tcp(localhost:3306)/emo_tracking" -path db/migrations down`
+## DBマイグレーションのコマンド(db接続情報は要変更)
+- `migrate -path ./infra/migrations -database "postgres://ginuser:ginpassword@localhost:5432/emotra?sslmode=disable" up`
+- `migrate -path ./infra/migrations -database "postgres://ginuser:ginpassword@localhost:5432/emotra?sslmode=disable" down`
 
 ## アーキテクチャなどの構想
 - オニオンアーキテクチャを採用する

@@ -1,19 +1,29 @@
 package repositories
 
-import "emotra-backend/api/models"
+import (
+	"emotra-backend/api/models"
+
+	"gorm.io/gorm"
+)
 
 type IDiaryRepository interface {
 	FindAll() (*[]models.Diary, error)
+	// FindByID(diaryId int) (*models.Diary, error)
 }
 
-type DiaryMemoryRepository struct {
-	diaries []models.Diary
+type DiaryRepository struct {
+	db *gorm.DB
 }
 
-func NewDiaryMemoryRepository(diaries []models.Diary) IDiaryRepository {
-	return &DiaryMemoryRepository{diaries: diaries}
+func NewDiaryRepository(db *gorm.DB) IDiaryRepository {
+	return &DiaryRepository{db: db}
 }
 
-func (r *DiaryMemoryRepository) FindAll() (*[]models.Diary, error) {
-	return &r.diaries, nil
+func (r *DiaryRepository) FindAll() (*[]models.Diary, error) {
+	var diaries []models.Diary
+	result := r.db.Find(&diaries)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &diaries, nil
 }
