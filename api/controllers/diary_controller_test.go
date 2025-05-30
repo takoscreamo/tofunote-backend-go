@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"emotra-backend/api/models"
+	"emotra-backend/domain/diary"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -9,16 +9,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-	"gorm.io/gorm"
 )
 
 // モックサービス
 type mockDiaryUsecase struct {
-	diaries *[]models.Diary
+	diaries *[]diary.Diary
 	err     error
 }
 
-func (m *mockDiaryUsecase) FindAll() (*[]models.Diary, error) {
+func (m *mockDiaryUsecase) FindAll() (*[]diary.Diary, error) {
 	return m.diaries, m.err
 }
 
@@ -27,8 +26,8 @@ func TestDiaryController_FindAll(t *testing.T) {
 
 	t.Run("正常に全件取得できる場合は200を返す", func(t *testing.T) {
 		// モックデータ
-		mockData := &[]models.Diary{
-			{Model: gorm.Model{ID: 1}, UserID: 100, Date: "2025-01-01", Mental: 4, Diary: "良い日だった"},
+		mockData := &[]diary.Diary{
+			{ID: 1, UserID: 100, Date: "2025-01-01", Mental: diary.NewMental(5), Diary: "良い日だった"},
 		}
 		usecase := &mockDiaryUsecase{diaries: mockData}
 		controller := NewDiaryController(usecase)

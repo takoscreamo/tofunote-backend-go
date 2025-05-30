@@ -1,12 +1,12 @@
 package usecases
 
 import (
-	"emotra-backend/api/models"
+	"emotra-backend/domain/diary"
 	"emotra-backend/repositories"
 )
 
 type IDiaryUsecase interface {
-	FindAll() (*[]models.Diary, error)
+	FindAll() (*[]diary.Diary, error)
 }
 
 type DiaryUsecase struct {
@@ -17,6 +17,6 @@ func NewDiaryUsecase(repository repositories.IDiaryRepository) IDiaryUsecase {
 	return &DiaryUsecase{repository: repository}
 }
 
-func (s *DiaryUsecase) FindAll() (*[]models.Diary, error) {
+func (s *DiaryUsecase) FindAll() (*[]diary.Diary, error) {
 	return s.repository.FindAll()
 }
