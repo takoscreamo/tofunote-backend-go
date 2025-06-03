@@ -18,7 +18,12 @@ func main() {
 	diaryUsecase := usecases.NewDiaryUsecase(diaryRepository)
 	diaryController := controllers.NewDiaryController(diaryUsecase)
 
+	diaryAnalysisUsecase := usecases.NewDiaryAnalysisUsecase(diaryRepository)
+	diaryAnalysisController := controllers.NewDiaryAnalysisController(diaryAnalysisUsecase)
+
 	router := gin.Default()
 	router.GET("/diaries", diaryController.FindAll)
+	router.GET("/analyze-diaries", diaryAnalysisController.AnalyzeAllDiariesHandler)
+
 	router.Run()
 }

@@ -1,0 +1,31 @@
+package controllers
+
+import (
+	"net/http"
+
+	"emotra-backend/usecases"
+
+	"github.com/gin-gonic/gin"
+)
+
+type DiaryAnalysisController struct {
+	DiaryAnalysisUsecase *usecases.DiaryAnalysisUsecase
+}
+
+// NewDiaryAnalysisController は新しい DiaryAnalysisController を作成する
+func NewDiaryAnalysisController(usecase *usecases.DiaryAnalysisUsecase) *DiaryAnalysisController {
+	return &DiaryAnalysisController{
+		DiaryAnalysisUsecase: usecase,
+	}
+}
+
+// AnalyzeAllDiariesHandler は全ての日記を分析するエンドポイント
+func (c *DiaryAnalysisController) AnalyzeAllDiariesHandler(ctx *gin.Context) {
+	result, err := c.DiaryAnalysisUsecase.AnalyzeAllDiaries()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"analysis_result": result})
+}
