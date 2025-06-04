@@ -22,9 +22,9 @@
 - `migrate -path ./infra/migrations -database "postgres://ginuser:ginpassword@localhost:5432/emotra?sslmode=disable" down`
 
 ## アーキテクチャなどの構想
-- オニオンアーキテクチャを採用する
-- ドメイン駆動設計を意識したい
-- テストを書きやすくしたい
+- 軽量DDDを採用
+- オニオンアーキテクチャを採用
+- テストを書きやすく
   - ユースケース層とリポジトリ層はインターフェース経由で依存関係を注入
   - コントローラ層はインターフェースを作成しないことにしてみる
 
