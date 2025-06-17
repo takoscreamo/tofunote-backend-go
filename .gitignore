@@ -1,3 +1,4 @@
 /tmp
 .env
 /docker
+!.vscode/api-manual-test.http

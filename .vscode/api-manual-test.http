@@ -1,0 +1,18 @@
+@baseUrl = http://localhost:8080/api
+@contentType = application/json
+@accept = application/json
+
+### 日記一覧の取得
+curl --location 'http://localhost:8080/api/diaries' \
+--header 'Accept: application/json'
+
+### 日記の作成
+curl --location 'http://localhost:8080/api/diaries' \
+--header 'Content-Type: application/json' \
+--header 'Accept: application/json' \
+--data '{
+    "user_id": 100,
+    "date": "2024-03-20",
+    "mental": 8,
+    "diary": "今日はとても良い日だった。"
+}'
