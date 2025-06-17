@@ -1,0 +1,135 @@
+openapi: 3.0.0
+info:
+  title: 日記API
+  description: ユーザーの日記を管理するためのRESTful API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api
+    description: 開発環境
+
+paths:
+  /diaries:
+    get:
+      summary: 日記一覧取得
+      description: 日記の一覧を取得します
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Diary'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: 日記作成
+      description: 新しい日記を作成します
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDiaryDTO'
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Diary'
+        '400':
+          description: リクエストが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Diary:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 日記ID
+        user_id:
+          type: integer
+          description: ユーザーID
+        date:
+          type: string
+          format: date
+          description: 日付（YYYY-MM-DD形式）
+        mental:
+          $ref: '#/components/schemas/Mental'
+        diary:
+          type: string
+          description: 日記の内容
+      required:
+        - id
+        - user_id
+        - date
+        - mental
+        - diary
+
+    Mental:
+      type: object
+      properties:
+        value:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: メンタルスコア（1〜10の整数）
+      required:
+        - value
+
+    CreateDiaryDTO:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          description: ユーザーID
+        date:
+          type: string
+          format: date
+          description: 日付（YYYY-MM-DD形式）
+        mental:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: メンタルスコア（1〜10の整数）
+        diary:
+          type: string
+          description: 日記の内容
+      required:
+        - user_id
+        - date
+        - mental
+        - diary
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: エラーメッセージ
+      required:
+        - error
