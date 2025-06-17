@@ -4,6 +4,8 @@ import (
 	"emotra-backend/domain/diary"
 	"errors"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 // モックリポジトリ（IDiaryRepository の簡易実装）
@@ -16,38 +18,89 @@ func (m *mockDiaryRepository) FindAll() (*[]diary.Diary, error) {
 	return m.diaries, m.err
 }
 
+// testDiaries はテスト用のダイアリーデータを定義します
+var testDiaries = []diary.Diary{
+	{ID: 1, UserID: 101, Date: "2025-05-01", Mental: diary.NewMental(5), Diary: "今日は良い一日だった"},
+	{ID: 2, UserID: 102, Date: "2025-05-02", Mental: diary.NewMental(3), Diary: "少し疲れた"},
+}
+
 func TestDiaryUsecase_FindAll(t *testing.T) {
-	t.Run("リポジトリから取得した値をそのまま返す", func(t *testing.T) {
-		expected := &[]diary.Diary{
-			{ID: 1, UserID: 101, Date: "2025-05-01", Mental: diary.NewMental(5), Diary: "今日は良い一日だった"},
-			{ID: 2, UserID: 102, Date: "2025-05-02", Mental: diary.NewMental(3), Diary: "少し疲れた"},
-		}
+	tests := []struct {
+		name            string
+		setupMock       func() *mockDiaryRepository
+		expectedDiaries []diary.Diary
+		expectedError   error
+	}{
+		{
+			name: "正常系：リポジトリから取得した値をそのまま返す",
+			setupMock: func() *mockDiaryRepository {
+				diaries := make([]diary.Diary, len(testDiaries))
+				copy(diaries, testDiaries)
+				return &mockDiaryRepository{
+					diaries: &diaries,
+					err:     nil,
+				}
+			},
+			expectedDiaries: testDiaries,
+			expectedError:   nil,
+		},
+		{
+			name: "正常系：空のリストを処理できる",
+			setupMock: func() *mockDiaryRepository {
+				emptyDiaries := make([]diary.Diary, 0)
+				return &mockDiaryRepository{
+					diaries: &emptyDiaries,
+					err:     nil,
+				}
+			},
+			expectedDiaries: []diary.Diary{},
+			expectedError:   nil,
+		},
+		{
+			name: "異常系：リポジトリがエラーを返した場合にそのまま返す",
+			setupMock: func() *mockDiaryRepository {
+				return &mockDiaryRepository{
+					diaries: nil,
+					err:     errors.New("DB接続失敗"),
+				}
+			},
+			expectedDiaries: nil,
+			expectedError:   errors.New("DB接続失敗"),
+		},
+	}
 
-		mockRepo := &mockDiaryRepository{diaries: expected}
-		usecase := NewDiaryUsecase(mockRepo)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := tt.setupMock()
+			usecase := NewDiaryUsecase(mockRepo)
 
-		result, err := usecase.FindAll()
-		if err != nil {
-			t.Fatalf("エラーが返されました: %v", err)
-		}
+			result, err := usecase.FindAll()
 
-		if result != expected {
-			t.Errorf("リポジトリの返却値と異なります。期待: %p, 実際: %p", expected, result)
-		}
-	})
+			// エラーチェック
+			if tt.expectedError != nil {
+				if err == nil {
+					t.Error("エラーが期待されていましたが、発生しませんでした")
+					return
+				}
+				if err.Error() != tt.expectedError.Error() {
+					t.Errorf("期待するエラー: %v, 実際のエラー: %v", tt.expectedError, err)
+				}
+				return
+			}
 
-	t.Run("リポジトリがエラーを返した場合にそのまま返す", func(t *testing.T) {
-		expectedErr := errors.New("DB接続失敗")
+			if err != nil {
+				t.Fatalf("予期しないエラーが発生しました: %v", err)
+			}
 
-		mockRepo := &mockDiaryRepository{
-			diaries: nil,
-			err:     expectedErr,
-		}
-		usecase := NewDiaryUsecase(mockRepo)
+			if result == nil {
+				t.Error("結果がnilです")
+				return
+			}
 
-		_, err := usecase.FindAll()
-		if err != expectedErr {
-			t.Errorf("エラーの透過失敗。期待: %v, 実際: %v", expectedErr, err)
-		}
-	})
+			// 結果の比較
+			if diff := cmp.Diff(tt.expectedDiaries, *result); diff != "" {
+				t.Errorf("期待値と実際の値が異なります:\n%s", diff)
+			}
+		})
+	}
 }

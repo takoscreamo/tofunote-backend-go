@@ -18,7 +18,7 @@ func NewDiaryController(usecase usecases.IDiaryUsecase) *DiaryController {
 func (c *DiaryController) FindAll(ctx *gin.Context) {
 	diaries, err := c.usecase.FindAll()
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Unexpected error"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"data": diaries})

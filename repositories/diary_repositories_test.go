@@ -8,7 +8,6 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -44,9 +43,6 @@ var testDiaries = []diary.Diary{
 }
 
 func TestFindAll(t *testing.T) {
-	// タイムスタンプフィールドを比較から除外するオプション
-	ignoreTimeFields := cmpopts.IgnoreFields(diary.Diary{}, "CreatedAt", "UpdatedAt", "DeletedAt")
-
 	tests := []struct {
 		name            string
 		setupMock       func(sqlmock.Sqlmock)
@@ -110,7 +106,7 @@ func TestFindAll(t *testing.T) {
 				return
 			}
 
-			if diff := cmp.Diff(tt.expectedDiaries, *result, ignoreTimeFields); diff != "" {
+			if diff := cmp.Diff(tt.expectedDiaries, *result); diff != "" {
 				t.Errorf("期待値と実際の値が異なります:\n%s", diff)
 			}
 
