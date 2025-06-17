@@ -37,10 +37,14 @@ func verifyMockExpectations(t *testing.T, mock sqlmock.Sqlmock) {
 }
 
 // testDiary はテスト用のダイアリーデータを定義します
-var testDiaries = []diary.Diary{
-	{ID: 1, UserID: 101, Date: "2025-05-01", Mental: diary.NewMental(5), Diary: "今日は楽しい一日だった。"},
-	{ID: 2, UserID: 102, Date: "2025-05-02", Mental: diary.NewMental(3), Diary: "少し疲れたけど頑張った。"},
-}
+var testDiaries = func() []diary.Diary {
+	m5, _ := diary.NewMental(5)
+	m3, _ := diary.NewMental(3)
+	return []diary.Diary{
+		{ID: 1, UserID: 101, Date: "2025-05-01", Mental: m5, Diary: "今日は楽しい一日だった。"},
+		{ID: 2, UserID: 102, Date: "2025-05-02", Mental: m3, Diary: "少し疲れたけど頑張った。"},
+	}
+}()
 
 func TestFindAll(t *testing.T) {
 	tests := []struct {

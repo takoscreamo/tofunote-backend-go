@@ -9,6 +9,7 @@ import (
 
 type IDiaryRepository interface {
 	FindAll() (*[]diary.Diary, error)
+	Create(diary *diary.Diary) error
 	// FindByID(diaryId int) (*models.Diary, error)
 }
 
@@ -31,4 +32,12 @@ func (r *DiaryRepository) FindAll() (*[]diary.Diary, error) {
 		diaries = append(diaries, *model.ToDomain())
 	}
 	return &diaries, nil
+}
+
+func (r *DiaryRepository) Create(diary *diary.Diary) error {
+	model := db.FromDomain(diary)
+	if err := r.db.Create(model).Error; err != nil {
+		return err
+	}
+	return nil
 }
