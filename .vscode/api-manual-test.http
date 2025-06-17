@@ -1,6 +1,4 @@
-@baseUrl = http://localhost:8080/api
-@contentType = application/json
-@accept = application/json
+# Send Request ボタンを押すと、このファイルの内容が実行される
 
 ### 日記一覧の取得
 curl --location 'http://localhost:8080/api/diaries' \
