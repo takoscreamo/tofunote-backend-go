@@ -26,6 +26,9 @@
 - `migrate -path ./infra/migrations -database "postgres://ginuser:ginpassword@localhost:5432/emotra?sslmode=disable" up`
 - `migrate -path ./infra/migrations -database "postgres://ginuser:ginpassword@localhost:5432/emotra?sslmode=disable" down`
 
+## テスト 
+- `go test ./...`
+
 ## アーキテクチャなどの構想
 - 軽量DDDを採用
 - オニオンアーキテクチャを採用

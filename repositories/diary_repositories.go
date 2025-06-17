@@ -26,14 +26,9 @@ func (r *DiaryRepository) FindAll() (*[]diary.Diary, error) {
 		return nil, err
 	}
 
-	var diaries []diary.Diary
+	diaries := make([]diary.Diary, 0)
 	for _, model := range diaryModels {
 		diaries = append(diaries, *model.ToDomain())
 	}
 	return &diaries, nil
 }
-
-// func (r *DiaryRepository) Create(ctx context.Context, d *diary.Diary) error {
-// 	model := db.FromDomain(d)
-// 	return r.db.WithContext(ctx).Create(model).Error
-// }
