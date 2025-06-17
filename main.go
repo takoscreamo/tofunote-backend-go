@@ -22,8 +22,12 @@ func main() {
 	diaryAnalysisController := controllers.NewDiaryAnalysisController(diaryAnalysisUsecase)
 
 	router := gin.Default()
-	router.GET("/diaries", diaryController.FindAll)
-	router.GET("/analyze-diaries", diaryAnalysisController.AnalyzeAllDiariesHandler)
+	api := router.Group("/api")
+	{
+		api.GET("/diaries", diaryController.FindAll)
+		api.POST("/diaries", diaryController.Create)
+		api.GET("/analyze-diaries", diaryAnalysisController.AnalyzeAllDiariesHandler)
+	}
 
 	router.Run()
 }
