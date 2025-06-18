@@ -1,6 +1,7 @@
 package infra
 
 import (
+	"emotra-backend/infra/db"
 	"fmt"
 	"log"
 	"os"
@@ -22,20 +23,26 @@ func SetupDB() *gorm.DB {
 	)
 
 	var (
-		db  *gorm.DB
-		err error
+		database *gorm.DB
+		err      error
 	)
 
 	if env == "prod" {
-		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+		database, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 		log.Println("Setup postgresql database")
 	} else {
-		db, err = gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+		database, err = gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 		log.Println("Setup sqlite database")
 	}
 	if err != nil {
 		panic("Failed to connect database")
 	}
 
-	return db
+	// AutoMigrateでテーブルを作成
+	err = database.AutoMigrate(&db.DiaryModel{})
+	if err != nil {
+		panic("Failed to migrate database")
+	}
+
+	return database
 }

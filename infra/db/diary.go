@@ -20,11 +20,16 @@ func (DiaryModel) TableName() string {
 
 // ToDomain converts the persistence model to the domain model.
 func (d *DiaryModel) ToDomain() *diary.Diary {
+	mental, err := diary.NewMental(d.Mental)
+	if err != nil {
+		// エラーの場合はデフォルト値を使用
+		mental, _ = diary.NewMental(5)
+	}
 	return &diary.Diary{
 		ID:     int(d.ID),
 		UserID: d.UserID,
 		Date:   d.Date,
-		Mental: diary.Mental{Value: d.Mental},
+		Mental: mental,
 		Diary:  d.Diary,
 	}
 }
@@ -34,7 +39,7 @@ func FromDomain(d *diary.Diary) *DiaryModel {
 	return &DiaryModel{
 		UserID: d.UserID,
 		Date:   d.Date,
-		Mental: d.Mental.Value,
+		Mental: d.Mental.GetValue(),
 		Diary:  d.Diary,
 	}
 }

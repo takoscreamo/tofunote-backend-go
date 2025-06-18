@@ -97,15 +97,10 @@ components:
         - diary
 
     Mental:
-      type: object
-      properties:
-        value:
-          type: integer
-          minimum: 1
-          maximum: 10
-          description: メンタルスコア（1〜10の整数）
-      required:
-        - value
+      type: integer
+      minimum: 1
+      maximum: 10
+      description: メンタルスコア（1〜10の整数）
 
     CreateDiaryDTO:
       type: object

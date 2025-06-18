@@ -159,7 +159,7 @@ func TestDiaryController_Create(t *testing.T) {
 					{
 						UserID: 100,
 						Date:   "2025-01-01",
-						Mental: diary.Mental{Value: 5},
+						Mental: func() diary.Mental { m, _ := diary.NewMental(5); return m }(),
 						Diary:  "良い日だった",
 					},
 				},
@@ -256,7 +256,7 @@ func TestDiaryController_Create(t *testing.T) {
 				_ = json.Unmarshal(response["data"], &diary)
 				assert.Equal(t, tt.expectedBody.Data[0].UserID, diary.UserID, "ユーザーIDが期待値と異なります")
 				assert.Equal(t, tt.expectedBody.Data[0].Date, diary.Date, "日付が期待値と異なります")
-				assert.Equal(t, tt.expectedBody.Data[0].Mental.Value, diary.Mental.Value, "メンタルスコアが期待値と異なります")
+				assert.Equal(t, tt.expectedBody.Data[0].Mental.GetValue(), diary.Mental.GetValue(), "メンタルスコアが期待値と異なります")
 				assert.Equal(t, tt.expectedBody.Data[0].Diary, diary.Diary, "日記内容が期待値と異なります")
 			} else {
 				// 異常系の場合
