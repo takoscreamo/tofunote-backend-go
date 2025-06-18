@@ -3,6 +3,8 @@ package repositories
 import (
 	"emotra-backend/domain/diary"
 	"emotra-backend/infra/db"
+	"errors"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -37,6 +39,11 @@ func (r *DiaryRepository) FindAll() (*[]diary.Diary, error) {
 func (r *DiaryRepository) Create(diary *diary.Diary) error {
 	model := db.FromDomain(diary)
 	if err := r.db.Create(model).Error; err != nil {
+		// 複合ユニークキー制約違反のエラーハンドリング
+		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") ||
+			strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			return errors.New("この日付の日記は既に作成されています")
+		}
 		return err
 	}
 	return nil

@@ -8,8 +8,8 @@ import (
 
 type DiaryModel struct {
 	gorm.Model
-	UserID int    `gorm:"not null;type:integer"`
-	Date   string `gorm:"not null;type:date"`
+	UserID int    `gorm:"not null;type:integer;uniqueIndex:idx_user_date,priority:1"`
+	Date   string `gorm:"not null;type:date;uniqueIndex:idx_user_date,priority:2"`
 	Mental int    `gorm:"not null;type:integer"`
 	Diary  string `gorm:"not null;type:text"`
 }

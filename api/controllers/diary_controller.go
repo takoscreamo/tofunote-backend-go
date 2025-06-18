@@ -4,6 +4,7 @@ import (
 	"emotra-backend/domain/diary"
 	"emotra-backend/usecases"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -51,6 +52,11 @@ func (c *DiaryController) Create(ctx *gin.Context) {
 	}
 	err = c.usecase.Create(&newDiary)
 	if err != nil {
+		// 複合ユニークキー制約違反の場合は409 Conflictを返す
+		if strings.Contains(err.Error(), "この日付の日記は既に作成されています") {
+			ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

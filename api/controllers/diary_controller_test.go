@@ -184,6 +184,24 @@ func TestDiaryController_Create(t *testing.T) {
 			},
 		},
 		{
+			name: "異常系：複合ユニークキー制約違反",
+			setupMock: func() *mockDiaryUsecase {
+				return &mockDiaryUsecase{
+					err: errors.New("この日付の日記は既に作成されています"),
+				}
+			},
+			requestBody: CreateDiaryDTO{
+				UserID: 100,
+				Date:   "2025-01-01",
+				Mental: 5,
+				Diary:  "良い日だった",
+			},
+			expectedStatus: http.StatusConflict,
+			expectedBody: responseBody{
+				Error: "この日付の日記は既に作成されています",
+			},
+		},
+		{
 			name: "異常系：サービスがエラーを返した場合は500を返す",
 			setupMock: func() *mockDiaryUsecase {
 				return &mockDiaryUsecase{
