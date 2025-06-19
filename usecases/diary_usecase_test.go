@@ -26,6 +26,10 @@ func (m *mockDiaryRepository) Update(userID int, date string, diary *diary.Diary
 	return m.err
 }
 
+func (m *mockDiaryRepository) Delete(userID int, date string) error {
+	return m.err
+}
+
 // testDiaries はテスト用のダイアリーデータを定義します
 var testDiaries = func() []diary.Diary {
 	m5, _ := diary.NewMental(5)
@@ -270,6 +274,75 @@ func TestDiaryUsecase_Update(t *testing.T) {
 			usecase := NewDiaryUsecase(mockRepo)
 
 			err := usecase.Update(tt.userID, tt.date, &tt.updateDiary)
+
+			// エラーチェック
+			if tt.expectedError != nil {
+				if err == nil {
+					t.Error("エラーが期待されていましたが、発生しませんでした")
+					return
+				}
+				if err.Error() != tt.expectedError.Error() {
+					t.Errorf("期待するエラー: %v, 実際のエラー: %v", tt.expectedError, err)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("予期しないエラーが発生しました: %v", err)
+			}
+		})
+	}
+}
+
+func TestDiaryUsecase_Delete(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupMock     func() *mockDiaryRepository
+		userID        int
+		date          string
+		expectedError error
+	}{
+		{
+			name: "正常系：日記を削除できる",
+			setupMock: func() *mockDiaryRepository {
+				return &mockDiaryRepository{
+					err: nil,
+				}
+			},
+			userID:        101,
+			date:          "2025-05-01",
+			expectedError: nil,
+		},
+		{
+			name: "異常系：リポジトリがエラーを返した場合にそのまま返す",
+			setupMock: func() *mockDiaryRepository {
+				return &mockDiaryRepository{
+					err: errors.New("指定された日付の日記が見つかりません"),
+				}
+			},
+			userID:        101,
+			date:          "2025-05-01",
+			expectedError: errors.New("指定された日付の日記が見つかりません"),
+		},
+		{
+			name: "異常系：DBエラーが発生した場合",
+			setupMock: func() *mockDiaryRepository {
+				return &mockDiaryRepository{
+					err: errors.New("DB接続エラー"),
+				}
+			},
+			userID:        101,
+			date:          "2025-05-01",
+			expectedError: errors.New("DB接続エラー"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := tt.setupMock()
+			usecase := NewDiaryUsecase(mockRepo)
+
+			err := usecase.Delete(tt.userID, tt.date)
 
 			// エラーチェック
 			if tt.expectedError != nil {

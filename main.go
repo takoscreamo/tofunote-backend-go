@@ -27,6 +27,7 @@ func main() {
 		api.GET("/diaries", diaryController.FindAll)
 		api.POST("/diaries", diaryController.Create)
 		api.PUT("/diaries/:user_id/:date", diaryController.Update)
+		api.DELETE("/diaries/:user_id/:date", diaryController.Delete)
 		api.GET("/analyze-diaries", diaryAnalysisController.AnalyzeAllDiariesHandler)
 	}
 

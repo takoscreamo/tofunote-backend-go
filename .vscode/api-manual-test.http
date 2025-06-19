@@ -23,3 +23,7 @@ curl --location --request PUT 'http://localhost:8080/api/diaries/100/2024-03-20'
     "mental": 9,
     "diary": "今日はとても良い日だった。更新版"
 }'
+
+### 日記の削除（正常系）
+curl --location --request DELETE 'http://localhost:8080/api/diaries/100/2024-03-20' \
+--header 'Accept: application/json'

@@ -9,6 +9,7 @@ type IDiaryUsecase interface {
 	FindAll() (*[]diary.Diary, error)
 	Create(diary *diary.Diary) error
 	Update(userID int, date string, diary *diary.Diary) error
+	Delete(userID int, date string) error
 }
 
 type DiaryUsecase struct {
@@ -29,4 +30,8 @@ func (s *DiaryUsecase) Create(diary *diary.Diary) error {
 
 func (s *DiaryUsecase) Update(userID int, date string, diary *diary.Diary) error {
 	return s.repository.Update(userID, date, diary)
+}
+
+func (s *DiaryUsecase) Delete(userID int, date string) error {
+	return s.repository.Delete(userID, date)
 }

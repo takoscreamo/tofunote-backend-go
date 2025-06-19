@@ -31,6 +31,10 @@ func (m *mockDiaryUsecase) Update(userID int, date string, diary *diary.Diary) e
 	return m.err
 }
 
+func (m *mockDiaryUsecase) Delete(userID int, date string) error {
+	return m.err
+}
+
 // testDiaries はテスト用のダイアリーデータを定義します
 var testDiaries = func() []diary.Diary {
 	m5, _ := diary.NewMental(5)
@@ -474,6 +478,120 @@ func TestDiaryController_Update(t *testing.T) {
 							assert.Equal(t, expected.Diary, actualDiaries[i].Diary, "日記内容が期待値と異なります")
 						}
 					}
+				}
+			}
+		})
+	}
+}
+
+func TestDiaryController_Delete(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	tests := []struct {
+		name           string
+		setupMock      func() *mockDiaryUsecase
+		userID         string
+		date           string
+		expectedStatus int
+		expectedBody   responseBody
+	}{
+		{
+			name: "正常系：日記を削除できる",
+			setupMock: func() *mockDiaryUsecase {
+				return &mockDiaryUsecase{
+					err: nil,
+				}
+			},
+			userID:         "100",
+			date:           "2025-01-01",
+			expectedStatus: http.StatusOK,
+			expectedBody: responseBody{
+				Data: map[string]string{"message": "日記が正常に削除されました"},
+			},
+		},
+		{
+			name: "異常系：無効なユーザーID",
+			setupMock: func() *mockDiaryUsecase {
+				return &mockDiaryUsecase{
+					err: nil,
+				}
+			},
+			userID:         "invalid",
+			date:           "2025-01-01",
+			expectedStatus: http.StatusBadRequest,
+			expectedBody: responseBody{
+				Error: "無効なユーザーIDです",
+			},
+		},
+		{
+			name: "異常系：日記が見つからない",
+			setupMock: func() *mockDiaryUsecase {
+				return &mockDiaryUsecase{
+					err: errors.New("指定された日付の日記が見つかりません"),
+				}
+			},
+			userID:         "100",
+			date:           "2025-01-01",
+			expectedStatus: http.StatusNotFound,
+			expectedBody: responseBody{
+				Error: "指定された日付の日記が見つかりません",
+			},
+		},
+		{
+			name: "異常系：サービスがエラーを返した場合は500を返す",
+			setupMock: func() *mockDiaryUsecase {
+				return &mockDiaryUsecase{
+					err: errors.New("DBエラー"),
+				}
+			},
+			userID:         "100",
+			date:           "2025-01-01",
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody: responseBody{
+				Error: "DBエラー",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// モックのセットアップ
+			usecase := tt.setupMock()
+			controller := NewDiaryController(usecase)
+
+			// テスト用のHTTPリクエストとレスポンス
+			w := httptest.NewRecorder()
+			ctx, _ := gin.CreateTestContext(w)
+
+			// パラメータの設定
+			ctx.Params = gin.Params{
+				{Key: "user_id", Value: tt.userID},
+				{Key: "date", Value: tt.date},
+			}
+
+			// リクエストの設定
+			ctx.Request = httptest.NewRequest("DELETE", "/", nil)
+
+			// コントローラ呼び出し
+			controller.Delete(ctx)
+
+			// ステータスコードの検証
+			assert.Equal(t, tt.expectedStatus, w.Code, "ステータスコードが期待値と異なります")
+
+			// レスポンスボディの検証
+			if tt.expectedBody.Error != "" {
+				var errorResponse responseBody
+				err := json.Unmarshal(w.Body.Bytes(), &errorResponse)
+				assert.NoError(t, err, "エラーレスポンスのJSONパースに失敗しました")
+				assert.Equal(t, tt.expectedBody.Error, errorResponse.Error, "エラーメッセージが期待値と異なります")
+			} else {
+				// 成功レスポンスの場合
+				var successResponse map[string]interface{}
+				err := json.Unmarshal(w.Body.Bytes(), &successResponse)
+				assert.NoError(t, err, "成功レスポンスのJSONパースに失敗しました")
+
+				if expectedMessage, ok := tt.expectedBody.Data.(map[string]string); ok {
+					assert.Equal(t, expectedMessage["message"], successResponse["message"], "メッセージが期待値と異なります")
 				}
 			}
 		})

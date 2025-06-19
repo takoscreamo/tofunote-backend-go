@@ -111,3 +111,27 @@ func (c *DiaryController) Update(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{"data": updateDiary})
 }
+
+func (c *DiaryController) Delete(ctx *gin.Context) {
+	// URLパラメータからuser_idとdateを取得
+	userIDStr := ctx.Param("user_id")
+	date := ctx.Param("date")
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "無効なユーザーIDです"})
+		return
+	}
+
+	err = c.usecase.Delete(userID, date)
+	if err != nil {
+		if strings.Contains(err.Error(), "指定された日付の日記が見つかりません") {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "日記が正常に削除されました"})
+}

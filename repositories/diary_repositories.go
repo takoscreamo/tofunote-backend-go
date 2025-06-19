@@ -13,6 +13,7 @@ type IDiaryRepository interface {
 	FindAll() (*[]diary.Diary, error)
 	Create(diary *diary.Diary) error
 	Update(userID int, date string, diary *diary.Diary) error
+	Delete(userID int, date string) error
 	// FindByID(diaryId int) (*models.Diary, error)
 }
 
@@ -53,6 +54,17 @@ func (r *DiaryRepository) Create(diary *diary.Diary) error {
 func (r *DiaryRepository) Update(userID int, date string, diary *diary.Diary) error {
 	model := db.FromDomain(diary)
 	result := r.db.Where("user_id = ? AND date = ?", userID, date).Updates(model)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("指定された日付の日記が見つかりません")
+	}
+	return nil
+}
+
+func (r *DiaryRepository) Delete(userID int, date string) error {
+	result := r.db.Where("user_id = ? AND date = ?", userID, date).Delete(&db.DiaryModel{})
 	if result.Error != nil {
 		return result.Error
 	}

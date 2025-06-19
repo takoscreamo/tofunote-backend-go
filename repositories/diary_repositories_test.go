@@ -288,3 +288,78 @@ func TestUpdate(t *testing.T) {
 		})
 	}
 }
+
+func TestDelete(t *testing.T) {
+	tests := []struct {
+		name         string
+		setupMock    func(sqlmock.Sqlmock)
+		userID       int
+		date         string
+		expectError  bool
+		errorMessage string
+	}{
+		{
+			name: "正常系：日記を削除できる",
+			setupMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectExec(`UPDATE "diaries" SET "deleted_at"`).
+					WithArgs(sqlmock.AnyArg(), 101, "2025-05-01").
+					WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectCommit()
+			},
+			userID:      101,
+			date:        "2025-05-01",
+			expectError: false,
+		},
+		{
+			name: "異常系：該当データなし",
+			setupMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectExec(`UPDATE "diaries" SET "deleted_at"`).
+					WithArgs(sqlmock.AnyArg(), 101, "2025-05-01").
+					WillReturnResult(sqlmock.NewResult(1, 0))
+				mock.ExpectCommit()
+			},
+			userID:       101,
+			date:         "2025-05-01",
+			expectError:  true,
+			errorMessage: "指定された日付の日記が見つかりません",
+		},
+		{
+			name: "異常系：DBエラー",
+			setupMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectExec(`UPDATE "diaries" SET "deleted_at"`).
+					WithArgs(sqlmock.AnyArg(), 101, "2025-05-01").
+					WillReturnError(errors.New("DB error"))
+				mock.ExpectRollback()
+			},
+			userID:       101,
+			date:         "2025-05-01",
+			expectError:  true,
+			errorMessage: "DB error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gormDB, mock := setupTestDB(t)
+			tt.setupMock(mock)
+			repo := NewDiaryRepository(gormDB)
+
+			err := repo.Delete(tt.userID, tt.date)
+			if tt.expectError {
+				if err == nil {
+					t.Error("エラーが期待されていましたが、発生しませんでした")
+				} else if tt.errorMessage != "" && err.Error() != tt.errorMessage {
+					t.Errorf("期待するエラー: %v, 実際のエラー: %v", tt.errorMessage, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("予期しないエラーが発生しました: %v", err)
+				}
+			}
+			verifyMockExpectations(t, mock)
+		})
+	}
+}

@@ -121,6 +121,53 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+    delete:
+      summary: 日記削除
+      description: 指定されたユーザーIDと日付の日記を削除します
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ユーザーID
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+          description: 日付（YYYY-MM-DD形式）
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: 成功メッセージ
+                    example: "日記が正常に削除されました"
+        '400':
+          description: リクエストが不正（無効なユーザーID）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: 指定された日記が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
   schemas:
