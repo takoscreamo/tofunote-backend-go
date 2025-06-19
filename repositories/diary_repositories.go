@@ -11,6 +11,7 @@ import (
 
 type IDiaryRepository interface {
 	FindAll() (*[]diary.Diary, error)
+	FindByUserIDAndDate(userID int, date string) (*diary.Diary, error)
 	Create(diary *diary.Diary) error
 	Update(userID int, date string, diary *diary.Diary) error
 	Delete(userID int, date string) error
@@ -36,6 +37,17 @@ func (r *DiaryRepository) FindAll() (*[]diary.Diary, error) {
 		diaries = append(diaries, *model.ToDomain())
 	}
 	return &diaries, nil
+}
+
+func (r *DiaryRepository) FindByUserIDAndDate(userID int, date string) (*diary.Diary, error) {
+	var diaryModel db.DiaryModel
+	if err := r.db.Where("user_id = ? AND date = ?", userID, date).First(&diaryModel).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("指定された日付の日記が見つかりません")
+		}
+		return nil, err
+	}
+	return diaryModel.ToDomain(), nil
 }
 
 func (r *DiaryRepository) Create(diary *diary.Diary) error {

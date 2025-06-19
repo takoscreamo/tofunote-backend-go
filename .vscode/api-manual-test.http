@@ -4,6 +4,10 @@
 curl --location 'http://localhost:8080/api/diaries' \
 --header 'Accept: application/json'
 
+### 特定の日記の取得
+curl --location 'http://localhost:8080/api/diaries/100/2024-03-20' \
+--header 'Accept: application/json'
+
 ### 日記の作成
 curl --location 'http://localhost:8080/api/diaries' \
 --header 'Content-Type: application/json' \

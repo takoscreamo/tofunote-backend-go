@@ -7,6 +7,7 @@ import (
 
 type IDiaryUsecase interface {
 	FindAll() (*[]diary.Diary, error)
+	FindByUserIDAndDate(userID int, date string) (*diary.Diary, error)
 	Create(diary *diary.Diary) error
 	Update(userID int, date string, diary *diary.Diary) error
 	Delete(userID int, date string) error
@@ -22,6 +23,10 @@ func NewDiaryUsecase(repository repositories.IDiaryRepository) IDiaryUsecase {
 
 func (s *DiaryUsecase) FindAll() (*[]diary.Diary, error) {
 	return s.repository.FindAll()
+}
+
+func (s *DiaryUsecase) FindByUserIDAndDate(userID int, date string) (*diary.Diary, error) {
+	return s.repository.FindByUserIDAndDate(userID, date)
 }
 
 func (s *DiaryUsecase) Create(diary *diary.Diary) error {

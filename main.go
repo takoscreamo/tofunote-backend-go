@@ -25,6 +25,7 @@ func main() {
 	api := router.Group("/api")
 	{
 		api.GET("/diaries", diaryController.FindAll)
+		api.GET("/diaries/:user_id/:date", diaryController.FindByUserIDAndDate)
 		api.POST("/diaries", diaryController.Create)
 		api.PUT("/diaries/:user_id/:date", diaryController.Update)
 		api.DELETE("/diaries/:user_id/:date", diaryController.Delete)

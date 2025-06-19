@@ -70,6 +70,51 @@ paths:
                 $ref: '#/components/schemas/Error'
 
   /diaries/{user_id}/{date}:
+    get:
+      summary: 日記取得
+      description: 指定されたユーザーIDと日付の日記を取得します
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ユーザーID
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+          description: 日付（YYYY-MM-DD形式）
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Diary'
+        '400':
+          description: リクエストが不正（無効なユーザーID）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: 指定された日記が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     put:
       summary: 日記更新
       description: 指定されたユーザーIDと日付の日記を更新します
@@ -185,7 +230,10 @@ components:
           format: date
           description: 日付（YYYY-MM-DD形式）
         mental:
-          $ref: '#/components/schemas/Mental'
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: メンタルスコア（1〜10の整数）
         diary:
           type: string
           description: 日記の内容

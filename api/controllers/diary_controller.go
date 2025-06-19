@@ -24,7 +24,37 @@ func (c *DiaryController) FindAll(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"data": diaries})
+
+	responseDTOs := make([]DiaryResponseDTO, 0, len(*diaries))
+	for _, d := range *diaries {
+		responseDTOs = append(responseDTOs, ToResponseDTO(&d))
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": responseDTOs})
+}
+
+func (c *DiaryController) FindByUserIDAndDate(ctx *gin.Context) {
+	// URLパラメータからuser_idとdateを取得
+	userIDStr := ctx.Param("user_id")
+	date := ctx.Param("date")
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "無効なユーザーIDです"})
+		return
+	}
+
+	diary, err := c.usecase.FindByUserIDAndDate(userID, date)
+	if err != nil {
+		if strings.Contains(err.Error(), "指定された日付の日記が見つかりません") {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": ToResponseDTO(diary)})
 }
 
 type CreateDiaryDTO struct {
@@ -37,6 +67,25 @@ type CreateDiaryDTO struct {
 type UpdateDiaryDTO struct {
 	Mental int    `json:"mental"`
 	Diary  string `json:"diary"`
+}
+
+type DiaryResponseDTO struct {
+	ID     int    `json:"id"`
+	UserID int    `json:"user_id"`
+	Date   string `json:"date"`
+	Mental int    `json:"mental"`
+	Diary  string `json:"diary"`
+}
+
+// ToResponseDTO converts domain Diary to response DTO
+func ToResponseDTO(diary *diary.Diary) DiaryResponseDTO {
+	return DiaryResponseDTO{
+		ID:     diary.ID,
+		UserID: diary.UserID,
+		Date:   diary.Date,
+		Mental: diary.Mental.GetValue(),
+		Diary:  diary.Diary,
+	}
 }
 
 func (c *DiaryController) Create(ctx *gin.Context) {
@@ -66,7 +115,7 @@ func (c *DiaryController) Create(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusCreated, gin.H{"data": newDiary})
+	ctx.JSON(http.StatusCreated, gin.H{"data": ToResponseDTO(&newDiary)})
 }
 
 func (c *DiaryController) Update(ctx *gin.Context) {
@@ -109,7 +158,7 @@ func (c *DiaryController) Update(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"data": updateDiary})
+	ctx.JSON(http.StatusOK, gin.H{"data": ToResponseDTO(&updateDiary)})
 }
 
 func (c *DiaryController) Delete(ctx *gin.Context) {

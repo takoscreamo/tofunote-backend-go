@@ -363,3 +363,103 @@ func TestDelete(t *testing.T) {
 		})
 	}
 }
+
+func TestFindByUserIDAndDate(t *testing.T) {
+	m5, _ := diary.NewMental(5)
+	expectedDiary := diary.Diary{
+		ID:     1,
+		UserID: 101,
+		Date:   "2025-05-01",
+		Mental: m5,
+		Diary:  "テスト日記",
+	}
+
+	tests := []struct {
+		name          string
+		setupMock     func(sqlmock.Sqlmock)
+		userID        int
+		date          string
+		expectedDiary *diary.Diary
+		expectError   bool
+		errorMessage  string
+	}{
+		{
+			name: "正常系：指定されたuser_idとdateの日記を取得できる",
+			setupMock: func(mock sqlmock.Sqlmock) {
+				rows := sqlmock.NewRows([]string{"id", "user_id", "date", "mental", "diary", "created_at", "updated_at", "deleted_at"}).
+					AddRow(1, 101, "2025-05-01", 5, "テスト日記", time.Now(), time.Now(), nil)
+				mock.ExpectQuery(`SELECT \* FROM "diaries"`).
+					WithArgs(101, "2025-05-01", 1).
+					WillReturnRows(rows)
+			},
+			userID:        101,
+			date:          "2025-05-01",
+			expectedDiary: &expectedDiary,
+			expectError:   false,
+		},
+		{
+			name: "異常系：指定されたuser_idとdateの日記が見つからない",
+			setupMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery(`SELECT \* FROM "diaries"`).
+					WithArgs(999, "2025-05-01", 1).
+					WillReturnError(gorm.ErrRecordNotFound)
+			},
+			userID:        999,
+			date:          "2025-05-01",
+			expectedDiary: nil,
+			expectError:   true,
+			errorMessage:  "指定された日付の日記が見つかりません",
+		},
+		{
+			name: "異常系：DBエラー",
+			setupMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery(`SELECT \* FROM "diaries"`).
+					WithArgs(101, "2025-05-01", 1).
+					WillReturnError(errors.New("DB error"))
+			},
+			userID:        101,
+			date:          "2025-05-01",
+			expectedDiary: nil,
+			expectError:   true,
+			errorMessage:  "DB error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gormDB, mock := setupTestDB(t)
+			tt.setupMock(mock)
+			repo := NewDiaryRepository(gormDB)
+
+			result, err := repo.FindByUserIDAndDate(tt.userID, tt.date)
+			if tt.expectError {
+				if err == nil {
+					t.Error("エラーが期待されていましたが、発生しませんでした")
+				} else if tt.errorMessage != "" && err.Error() != tt.errorMessage {
+					t.Errorf("期待するエラー: %v, 実際のエラー: %v", tt.errorMessage, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("予期しないエラーが発生しました: %v", err)
+				}
+				if result == nil {
+					t.Error("結果がnilです")
+				} else {
+					if result.UserID != tt.expectedDiary.UserID {
+						t.Errorf("期待するUserID: %v, 実際のUserID: %v", tt.expectedDiary.UserID, result.UserID)
+					}
+					if result.Date != tt.expectedDiary.Date {
+						t.Errorf("期待するDate: %v, 実際のDate: %v", tt.expectedDiary.Date, result.Date)
+					}
+					if result.Mental.GetValue() != tt.expectedDiary.Mental.GetValue() {
+						t.Errorf("期待するMental: %v, 実際のMental: %v", tt.expectedDiary.Mental.GetValue(), result.Mental.GetValue())
+					}
+					if result.Diary != tt.expectedDiary.Diary {
+						t.Errorf("期待するDiary: %v, 実際のDiary: %v", tt.expectedDiary.Diary, result.Diary)
+					}
+				}
+			}
+			verifyMockExpectations(t, mock)
+		})
+	}
+}
