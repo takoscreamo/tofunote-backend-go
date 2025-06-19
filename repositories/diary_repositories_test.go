@@ -451,8 +451,8 @@ func TestFindByUserIDAndDate(t *testing.T) {
 					if result.Date != tt.expectedDiary.Date {
 						t.Errorf("期待するDate: %v, 実際のDate: %v", tt.expectedDiary.Date, result.Date)
 					}
-					if result.Mental.GetValue() != tt.expectedDiary.Mental.GetValue() {
-						t.Errorf("期待するMental: %v, 実際のMental: %v", tt.expectedDiary.Mental.GetValue(), result.Mental.GetValue())
+					if result.Mental != tt.expectedDiary.Mental {
+						t.Errorf("期待するMental: %v, 実際のMental: %v", tt.expectedDiary.Mental, result.Mental)
 					}
 					if result.Diary != tt.expectedDiary.Diary {
 						t.Errorf("期待するDiary: %v, 実際のDiary: %v", tt.expectedDiary.Diary, result.Diary)

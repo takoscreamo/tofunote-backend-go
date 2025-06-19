@@ -53,7 +53,7 @@ func (u *DiaryAnalysisUsecase) AnalyzeAllDiaries() (string, error) {
 			"ID: " + strconv.Itoa(diary.ID),
 			"UserID: " + strconv.Itoa(diary.UserID),
 			"Date: " + diary.Date,
-			"Mental: " + strconv.Itoa(diary.Mental.GetValue()),
+			"Mental: " + strconv.Itoa(int(diary.Mental)),
 			"Diary: " + diary.Diary,
 		}, "\n")
 		diaryContents = append(diaryContents, entry)

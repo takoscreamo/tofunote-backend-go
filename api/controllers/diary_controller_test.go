@@ -143,7 +143,7 @@ func TestDiaryController_FindAll(t *testing.T) {
 					if i < len(actualDiaries) {
 						assert.Equal(t, expected.UserID, actualDiaries[i].UserID, "ユーザーIDが期待値と異なります")
 						assert.Equal(t, expected.Date, actualDiaries[i].Date, "日付が期待値と異なります")
-						assert.Equal(t, expected.Mental, actualDiaries[i].Mental, "メンタルスコアが期待値と異なります")
+						assert.Equal(t, int(expected.Mental), int(actualDiaries[i].Mental), "メンタルスコアが期待値と異なります")
 						assert.Equal(t, expected.Diary, actualDiaries[i].Diary, "日記内容が期待値と異なります")
 					}
 				}
@@ -290,7 +290,7 @@ func TestDiaryController_Create(t *testing.T) {
 					assert.NoError(t, err, "DiaryResponseDTOオブジェクトのJSONパースに失敗しました")
 					assert.Equal(t, expectedDiary.UserID, actualDiary.UserID, "ユーザーIDが期待値と異なります")
 					assert.Equal(t, expectedDiary.Date, actualDiary.Date, "日付が期待値と異なります")
-					assert.Equal(t, expectedDiary.Mental, actualDiary.Mental, "メンタルスコアが期待値と異なります")
+					assert.Equal(t, int(expectedDiary.Mental), int(actualDiary.Mental), "メンタルスコアが期待値と異なります")
 					assert.Equal(t, expectedDiary.Diary, actualDiary.Diary, "日記内容が期待値と異なります")
 				} else if expectedDiaries, ok := tt.expectedBody.Data.([]DiaryResponseDTO); ok {
 					// DiaryResponseDTO配列の場合
@@ -302,7 +302,7 @@ func TestDiaryController_Create(t *testing.T) {
 						if i < len(actualDiaries) {
 							assert.Equal(t, expected.UserID, actualDiaries[i].UserID, "ユーザーIDが期待値と異なります")
 							assert.Equal(t, expected.Date, actualDiaries[i].Date, "日付が期待値と異なります")
-							assert.Equal(t, expected.Mental, actualDiaries[i].Mental, "メンタルスコアが期待値と異なります")
+							assert.Equal(t, int(expected.Mental), int(actualDiaries[i].Mental), "メンタルスコアが期待値と異なります")
 							assert.Equal(t, expected.Diary, actualDiaries[i].Diary, "日記内容が期待値と異なります")
 						}
 					}
@@ -470,7 +470,7 @@ func TestDiaryController_Update(t *testing.T) {
 					assert.NoError(t, err, "DiaryResponseDTOオブジェクトのJSONパースに失敗しました")
 					assert.Equal(t, expectedDiary.UserID, actualDiary.UserID, "ユーザーIDが期待値と異なります")
 					assert.Equal(t, expectedDiary.Date, actualDiary.Date, "日付が期待値と異なります")
-					assert.Equal(t, expectedDiary.Mental, actualDiary.Mental, "メンタルスコアが期待値と異なります")
+					assert.Equal(t, int(expectedDiary.Mental), int(actualDiary.Mental), "メンタルスコアが期待値と異なります")
 					assert.Equal(t, expectedDiary.Diary, actualDiary.Diary, "日記内容が期待値と異なります")
 				} else if expectedDiaries, ok := tt.expectedBody.Data.([]DiaryResponseDTO); ok {
 					// DiaryResponseDTO配列の場合
@@ -482,7 +482,7 @@ func TestDiaryController_Update(t *testing.T) {
 						if i < len(actualDiaries) {
 							assert.Equal(t, expected.UserID, actualDiaries[i].UserID, "ユーザーIDが期待値と異なります")
 							assert.Equal(t, expected.Date, actualDiaries[i].Date, "日付が期待値と異なります")
-							assert.Equal(t, expected.Mental, actualDiaries[i].Mental, "メンタルスコアが期待値と異なります")
+							assert.Equal(t, int(expected.Mental), int(actualDiaries[i].Mental), "メンタルスコアが期待値と異なります")
 							assert.Equal(t, expected.Diary, actualDiaries[i].Diary, "日記内容が期待値と異なります")
 						}
 					}
@@ -733,7 +733,7 @@ func TestDiaryController_FindByUserIDAndDate(t *testing.T) {
 					assert.NoError(t, err, "DiaryResponseDTOオブジェクトのJSONパースに失敗しました")
 					assert.Equal(t, expectedDiary.UserID, actualDiary.UserID, "ユーザーIDが期待値と異なります")
 					assert.Equal(t, expectedDiary.Date, actualDiary.Date, "日付が期待値と異なります")
-					assert.Equal(t, expectedDiary.Mental, actualDiary.Mental, "メンタルスコアが期待値と異なります")
+					assert.Equal(t, int(expectedDiary.Mental), int(actualDiary.Mental), "メンタルスコアが期待値と異なります")
 					assert.Equal(t, expectedDiary.Diary, actualDiary.Diary, "日記内容が期待値と異なります")
 				}
 			}

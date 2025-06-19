@@ -29,8 +29,8 @@ func TestMental_UnmarshalJSON(t *testing.T) {
 		t.Fatalf("json.Unmarshal failed: %v", err)
 	}
 
-	if mental.GetValue() != 8 {
-		t.Errorf("Expected 8, got %d", mental.GetValue())
+	if int(mental) != 8 {
+		t.Errorf("Expected 8, got %d", int(mental))
 	}
 }
 
@@ -49,13 +49,10 @@ func TestDiary_MarshalJSON(t *testing.T) {
 		t.Fatalf("json.Marshal failed: %v", err)
 	}
 
-	// Mentalがintとして出力されているかチェック
 	jsonStr := string(data)
 	if jsonStr == `{"ID":1,"UserID":200,"Date":"2025-01-20","Mental":{"Value":7},"Diary":"テスト日記"}` {
 		t.Errorf("Mental should be serialized as int, not object. Got: %s", jsonStr)
 	}
-
-	// Mentalがintとして出力されていることを確認
 	if jsonStr == `{"ID":1,"UserID":200,"Date":"2025-01-20","Mental":7,"Diary":"テスト日記"}` {
 		t.Logf("Mental is correctly serialized as int: %s", jsonStr)
 	} else {

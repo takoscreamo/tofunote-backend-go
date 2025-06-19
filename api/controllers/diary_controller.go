@@ -83,7 +83,7 @@ func ToResponseDTO(diary *diary.Diary) DiaryResponseDTO {
 		ID:     diary.ID,
 		UserID: diary.UserID,
 		Date:   diary.Date,
-		Mental: diary.Mental.GetValue(),
+		Mental: int(diary.Mental),
 		Diary:  diary.Diary,
 	}
 }
