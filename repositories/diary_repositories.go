@@ -64,7 +64,7 @@ func (r *DiaryRepository) Update(userID int, date string, diary *diary.Diary) er
 }
 
 func (r *DiaryRepository) Delete(userID int, date string) error {
-	result := r.db.Where("user_id = ? AND date = ?", userID, date).Delete(&db.DiaryModel{})
+	result := r.db.Unscoped().Where("user_id = ? AND date = ?", userID, date).Delete(&db.DiaryModel{})
 	if result.Error != nil {
 		return result.Error
 	}

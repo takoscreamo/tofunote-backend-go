@@ -302,8 +302,8 @@ func TestDelete(t *testing.T) {
 			name: "正常系：日記を削除できる",
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
-				mock.ExpectExec(`UPDATE "diaries" SET "deleted_at"`).
-					WithArgs(sqlmock.AnyArg(), 101, "2025-05-01").
+				mock.ExpectExec(`DELETE FROM "diaries"`).
+					WithArgs(101, "2025-05-01").
 					WillReturnResult(sqlmock.NewResult(1, 1))
 				mock.ExpectCommit()
 			},
@@ -315,8 +315,8 @@ func TestDelete(t *testing.T) {
 			name: "異常系：該当データなし",
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
-				mock.ExpectExec(`UPDATE "diaries" SET "deleted_at"`).
-					WithArgs(sqlmock.AnyArg(), 101, "2025-05-01").
+				mock.ExpectExec(`DELETE FROM "diaries"`).
+					WithArgs(101, "2025-05-01").
 					WillReturnResult(sqlmock.NewResult(1, 0))
 				mock.ExpectCommit()
 			},
@@ -329,8 +329,8 @@ func TestDelete(t *testing.T) {
 			name: "異常系：DBエラー",
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
-				mock.ExpectExec(`UPDATE "diaries" SET "deleted_at"`).
-					WithArgs(sqlmock.AnyArg(), 101, "2025-05-01").
+				mock.ExpectExec(`DELETE FROM "diaries"`).
+					WithArgs(101, "2025-05-01").
 					WillReturnError(errors.New("DB error"))
 				mock.ExpectRollback()
 			},
