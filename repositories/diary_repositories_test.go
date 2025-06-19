@@ -119,6 +119,91 @@ func TestFindAll(t *testing.T) {
 	}
 }
 
+func TestCreate(t *testing.T) {
+	m5, _ := diary.NewMental(5)
+
+	tests := []struct {
+		name         string
+		setupMock    func(sqlmock.Sqlmock)
+		createDiary  diary.Diary
+		expectError  bool
+		errorMessage string
+	}{
+		{
+			name: "正常系：日記を作成できる",
+			setupMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectQuery(`INSERT INTO "diaries"`).
+					WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+				mock.ExpectCommit()
+			},
+			createDiary: diary.Diary{
+				UserID: 101,
+				Date:   "2025-05-01",
+				Mental: m5,
+				Diary:  "新しい日記内容",
+			},
+			expectError: false,
+		},
+		{
+			name: "異常系：複合ユニークキー制約違反",
+			setupMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectQuery(`INSERT INTO "diaries"`).
+					WillReturnError(errors.New("duplicate key value violates unique constraint"))
+				mock.ExpectRollback()
+			},
+			createDiary: diary.Diary{
+				UserID: 101,
+				Date:   "2025-05-01",
+				Mental: m5,
+				Diary:  "重複する日記",
+			},
+			expectError:  true,
+			errorMessage: "この日付の日記は既に作成されています",
+		},
+		{
+			name: "異常系：DBエラー",
+			setupMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectQuery(`INSERT INTO "diaries"`).
+					WillReturnError(errors.New("DB error"))
+				mock.ExpectRollback()
+			},
+			createDiary: diary.Diary{
+				UserID: 101,
+				Date:   "2025-05-01",
+				Mental: m5,
+				Diary:  "DBエラー時の日記",
+			},
+			expectError:  true,
+			errorMessage: "DB error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gormDB, mock := setupTestDB(t)
+			tt.setupMock(mock)
+			repo := NewDiaryRepository(gormDB)
+
+			err := repo.Create(&tt.createDiary)
+			if tt.expectError {
+				if err == nil {
+					t.Error("エラーが期待されていましたが、発生しませんでした")
+				} else if tt.errorMessage != "" && err.Error() != tt.errorMessage {
+					t.Errorf("期待するエラー: %v, 実際のエラー: %v", tt.errorMessage, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("予期しないエラーが発生しました: %v", err)
+				}
+			}
+			verifyMockExpectations(t, mock)
+		})
+	}
+}
+
 func TestUpdate(t *testing.T) {
 	m5, _ := diary.NewMental(5)
 	tests := []struct {

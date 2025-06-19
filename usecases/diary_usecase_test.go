@@ -117,6 +117,88 @@ func TestDiaryUsecase_FindAll(t *testing.T) {
 	}
 }
 
+func TestDiaryUsecase_Create(t *testing.T) {
+	m5, _ := diary.NewMental(5)
+
+	tests := []struct {
+		name          string
+		setupMock     func() *mockDiaryRepository
+		createDiary   diary.Diary
+		expectedError error
+	}{
+		{
+			name: "正常系：日記を作成できる",
+			setupMock: func() *mockDiaryRepository {
+				return &mockDiaryRepository{
+					err: nil,
+				}
+			},
+			createDiary: diary.Diary{
+				UserID: 101,
+				Date:   "2025-05-01",
+				Mental: m5,
+				Diary:  "新しい日記内容",
+			},
+			expectedError: nil,
+		},
+		{
+			name: "異常系：複合ユニークキー制約違反",
+			setupMock: func() *mockDiaryRepository {
+				return &mockDiaryRepository{
+					err: errors.New("この日付の日記は既に作成されています"),
+				}
+			},
+			createDiary: diary.Diary{
+				UserID: 101,
+				Date:   "2025-05-01",
+				Mental: m5,
+				Diary:  "重複する日記",
+			},
+			expectedError: errors.New("この日付の日記は既に作成されています"),
+		},
+		{
+			name: "異常系：DBエラーが発生した場合",
+			setupMock: func() *mockDiaryRepository {
+				return &mockDiaryRepository{
+					err: errors.New("DB接続エラー"),
+				}
+			},
+			createDiary: diary.Diary{
+				UserID: 101,
+				Date:   "2025-05-01",
+				Mental: m5,
+				Diary:  "DBエラー時の日記",
+			},
+			expectedError: errors.New("DB接続エラー"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := tt.setupMock()
+			usecase := NewDiaryUsecase(mockRepo)
+
+			err := usecase.Create(&tt.createDiary)
+
+			// エラーチェック
+			if tt.expectedError != nil {
+				if err == nil {
+					t.Error("エラーが期待されていましたが、発生しませんでした")
+					return
+				}
+				if err.Error() != tt.expectedError.Error() {
+					t.Errorf("期待するエラー: %v, 実際のエラー: %v", tt.expectedError, err)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("予期しないエラーが発生しました: %v", err)
+			}
+		})
+	}
+}
+
 func TestDiaryUsecase_Update(t *testing.T) {
 	m5, _ := diary.NewMental(5)
 	m7, _ := diary.NewMental(7)
