@@ -14,3 +14,12 @@ curl --location 'http://localhost:8080/api/diaries' \
     "mental": 8,
     "diary": "今日はとても良い日だった。"
 }'
+
+### 日記の更新
+curl --location --request PUT 'http://localhost:8080/api/diaries/100/2024-03-20' \
+--header 'Content-Type: application/json' \
+--header 'Accept: application/json' \
+--data '{
+    "mental": 9,
+    "diary": "今日はとても良い日だった。更新版"
+}'

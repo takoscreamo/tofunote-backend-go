@@ -4,6 +4,7 @@ import (
 	"emotra-backend/domain/diary"
 	"emotra-backend/usecases"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -29,6 +30,11 @@ func (c *DiaryController) FindAll(ctx *gin.Context) {
 type CreateDiaryDTO struct {
 	UserID int    `json:"user_id"`
 	Date   string `json:"date"`
+	Mental int    `json:"mental"`
+	Diary  string `json:"diary"`
+}
+
+type UpdateDiaryDTO struct {
 	Mental int    `json:"mental"`
 	Diary  string `json:"diary"`
 }
@@ -61,4 +67,47 @@ func (c *DiaryController) Create(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusCreated, gin.H{"data": newDiary})
+}
+
+func (c *DiaryController) Update(ctx *gin.Context) {
+	// URLパラメータからuser_idとdateを取得
+	userIDStr := ctx.Param("user_id")
+	date := ctx.Param("date")
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "無効なユーザーIDです"})
+		return
+	}
+
+	var req UpdateDiaryDTO
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "無効なリクエストデータです"})
+		return
+	}
+
+	mental, err := diary.NewMental(req.Mental)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	updateDiary := diary.Diary{
+		UserID: userID,
+		Date:   date,
+		Mental: mental,
+		Diary:  req.Diary,
+	}
+
+	err = c.usecase.Update(userID, date, &updateDiary)
+	if err != nil {
+		if strings.Contains(err.Error(), "指定された日付の日記が見つかりません") {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": updateDiary})
 }

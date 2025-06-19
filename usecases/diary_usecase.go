@@ -8,6 +8,7 @@ import (
 type IDiaryUsecase interface {
 	FindAll() (*[]diary.Diary, error)
 	Create(diary *diary.Diary) error
+	Update(userID int, date string, diary *diary.Diary) error
 }
 
 type DiaryUsecase struct {
@@ -24,4 +25,8 @@ func (s *DiaryUsecase) FindAll() (*[]diary.Diary, error) {
 
 func (s *DiaryUsecase) Create(diary *diary.Diary) error {
 	return s.repository.Create(diary)
+}
+
+func (s *DiaryUsecase) Update(userID int, date string, diary *diary.Diary) error {
+	return s.repository.Update(userID, date, diary)
 }

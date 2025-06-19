@@ -118,3 +118,88 @@ func TestFindAll(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdate(t *testing.T) {
+	m5, _ := diary.NewMental(5)
+	tests := []struct {
+		name         string
+		setupMock    func(sqlmock.Sqlmock)
+		userID       int
+		date         string
+		updateDiary  diary.Diary
+		expectError  bool
+		errorMessage string
+	}{
+		{
+			name: "正常系：日記を更新できる",
+			setupMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectExec(`UPDATE "diaries"`).
+					WithArgs(sqlmock.AnyArg(), 101, "2025-05-01", 5, "更新内容", 101, "2025-05-01").
+					WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectCommit()
+			},
+			userID: 101,
+			date:   "2025-05-01",
+			updateDiary: diary.Diary{
+				UserID: 101,
+				Date:   "2025-05-01",
+				Mental: m5,
+				Diary:  "更新内容",
+			},
+			expectError: false,
+		},
+		{
+			name: "異常系：該当データなし",
+			setupMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectExec(`UPDATE "diaries"`).
+					WithArgs(sqlmock.AnyArg(), 101, "2025-05-01", 5, "更新内容", 101, "2025-05-01").
+					WillReturnResult(sqlmock.NewResult(1, 0))
+				mock.ExpectCommit()
+			},
+			userID:       101,
+			date:         "2025-05-01",
+			updateDiary:  diary.Diary{UserID: 101, Date: "2025-05-01", Mental: m5, Diary: "更新内容"},
+			expectError:  true,
+			errorMessage: "指定された日付の日記が見つかりません",
+		},
+		{
+			name: "異常系：DBエラー",
+			setupMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectExec(`UPDATE "diaries"`).
+					WithArgs(sqlmock.AnyArg(), 101, "2025-05-01", 5, "更新内容", 101, "2025-05-01").
+					WillReturnError(errors.New("DB error"))
+				mock.ExpectRollback()
+			},
+			userID:       101,
+			date:         "2025-05-01",
+			updateDiary:  diary.Diary{UserID: 101, Date: "2025-05-01", Mental: m5, Diary: "更新内容"},
+			expectError:  true,
+			errorMessage: "DB error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gormDB, mock := setupTestDB(t)
+			tt.setupMock(mock)
+			repo := NewDiaryRepository(gormDB)
+
+			err := repo.Update(tt.userID, tt.date, &tt.updateDiary)
+			if tt.expectError {
+				if err == nil {
+					t.Error("エラーが期待されていましたが、発生しませんでした")
+				} else if tt.errorMessage != "" && err.Error() != tt.errorMessage {
+					t.Errorf("期待するエラー: %v, 実際のエラー: %v", tt.errorMessage, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("予期しないエラーが発生しました: %v", err)
+				}
+			}
+			verifyMockExpectations(t, mock)
+		})
+	}
+}
