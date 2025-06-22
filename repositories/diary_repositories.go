@@ -11,6 +11,7 @@ import (
 
 type IDiaryRepository interface {
 	FindAll() (*[]diary.Diary, error)
+	FindByUserID(userID int) (*[]diary.Diary, error)
 	FindByUserIDAndDate(userID int, date string) (*diary.Diary, error)
 	Create(diary *diary.Diary) error
 	Update(userID int, date string, diary *diary.Diary) error
@@ -29,6 +30,19 @@ func NewDiaryRepository(db *gorm.DB) IDiaryRepository {
 func (r *DiaryRepository) FindAll() (*[]diary.Diary, error) {
 	var diaryModels []db.DiaryModel
 	if err := r.db.Find(&diaryModels).Error; err != nil {
+		return nil, err
+	}
+
+	diaries := make([]diary.Diary, 0)
+	for _, model := range diaryModels {
+		diaries = append(diaries, *model.ToDomain())
+	}
+	return &diaries, nil
+}
+
+func (r *DiaryRepository) FindByUserID(userID int) (*[]diary.Diary, error) {
+	var diaryModels []db.DiaryModel
+	if err := r.db.Where("user_id = ?", userID).Find(&diaryModels).Error; err != nil {
 		return nil, err
 	}
 

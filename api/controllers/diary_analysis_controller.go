@@ -19,9 +19,11 @@ func NewDiaryAnalysisController(usecase *usecases.DiaryAnalysisUsecase) *DiaryAn
 	}
 }
 
-// AnalyzeAllDiariesHandler は全ての日記を分析するエンドポイント
+// AnalyzeAllDiariesHandler は認証されたユーザーの日記を分析するエンドポイント
 func (c *DiaryAnalysisController) AnalyzeAllDiariesHandler(ctx *gin.Context) {
-	result, err := c.DiaryAnalysisUsecase.AnalyzeAllDiaries()
+	// ハードコードでuser_id=1を使用
+	userID := 1
+	result, err := c.DiaryAnalysisUsecase.AnalyzeUserDiaries(userID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

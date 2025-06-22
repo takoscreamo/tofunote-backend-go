@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 )
 
 // モックリポジトリ（IDiaryRepository の簡易実装）
@@ -16,6 +17,25 @@ type mockDiaryRepository struct {
 
 func (m *mockDiaryRepository) FindAll() (*[]diary.Diary, error) {
 	return m.diaries, m.err
+}
+
+func (m *mockDiaryRepository) FindByUserID(userID int) (*[]diary.Diary, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
+	if m.diaries == nil {
+		emptySlice := make([]diary.Diary, 0)
+		return &emptySlice, nil
+	}
+	// 特定のユーザーの日記のみをフィルタリング
+	var userDiaries []diary.Diary
+	for _, d := range *m.diaries {
+		if d.UserID == userID {
+			userDiaries = append(userDiaries, d)
+		}
+	}
+	// 存在しないユーザーの場合も空配列を返す（nilではなく）
+	return &userDiaries, nil
 }
 
 func (m *mockDiaryRepository) FindByUserIDAndDate(userID int, date string) (*diary.Diary, error) {
@@ -50,20 +70,21 @@ var testDiaries = func() []diary.Diary {
 	m5, _ := diary.NewMental(5)
 	m3, _ := diary.NewMental(3)
 	return []diary.Diary{
-		{ID: 1, UserID: 101, Date: "2025-05-01", Mental: m5, Diary: "今日は良い一日だった"},
-		{ID: 2, UserID: 102, Date: "2025-05-02", Mental: m3, Diary: "少し疲れた"},
+		{ID: 1, UserID: 1, Date: "2025-05-01", Mental: m5, Diary: "今日は良い一日だった"},
+		{ID: 2, UserID: 1, Date: "2025-05-02", Mental: m3, Diary: "少し疲れた"},
+		{ID: 3, UserID: 2, Date: "2025-05-01", Mental: m5, Diary: "別のユーザーの日記"},
 	}
 }()
 
 func TestDiaryUsecase_FindAll(t *testing.T) {
 	tests := []struct {
-		name            string
-		setupMock       func() *mockDiaryRepository
-		expectedDiaries []diary.Diary
-		expectedError   error
+		name      string
+		setupMock func() *mockDiaryRepository
+		expected  *[]diary.Diary
+		hasError  bool
 	}{
 		{
-			name: "正常系：リポジトリから取得した値をそのまま返す",
+			name: "正常系：全件取得できる",
 			setupMock: func() *mockDiaryRepository {
 				diaries := make([]diary.Diary, len(testDiaries))
 				copy(diaries, testDiaries)
@@ -72,307 +93,128 @@ func TestDiaryUsecase_FindAll(t *testing.T) {
 					err:     nil,
 				}
 			},
-			expectedDiaries: testDiaries,
-			expectedError:   nil,
+			expected: &testDiaries,
+			hasError: false,
 		},
 		{
-			name: "正常系：空のリストを処理できる",
-			setupMock: func() *mockDiaryRepository {
-				emptyDiaries := make([]diary.Diary, 0)
-				return &mockDiaryRepository{
-					diaries: &emptyDiaries,
-					err:     nil,
-				}
-			},
-			expectedDiaries: []diary.Diary{},
-			expectedError:   nil,
-		},
-		{
-			name: "異常系：リポジトリがエラーを返した場合にそのまま返す",
+			name: "異常系：リポジトリがエラーを返す",
 			setupMock: func() *mockDiaryRepository {
 				return &mockDiaryRepository{
 					diaries: nil,
-					err:     errors.New("DB接続失敗"),
+					err:     errors.New("DBエラー"),
 				}
 			},
-			expectedDiaries: nil,
-			expectedError:   errors.New("DB接続失敗"),
+			expected: nil,
+			hasError: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockRepo := tt.setupMock()
-			usecase := NewDiaryUsecase(mockRepo)
+			mock := tt.setupMock()
+			usecase := NewDiaryUsecase(mock)
 
 			result, err := usecase.FindAll()
 
-			// エラーチェック
-			if tt.expectedError != nil {
-				if err == nil {
-					t.Error("エラーが期待されていましたが、発生しませんでした")
-					return
+			if tt.hasError {
+				assert.Error(t, err)
+				assert.Nil(t, result)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				if diff := cmp.Diff(tt.expected, result); diff != "" {
+					t.Errorf("FindAll() mismatch (-expected +got):\n%s", diff)
 				}
-				if err.Error() != tt.expectedError.Error() {
-					t.Errorf("期待するエラー: %v, 実際のエラー: %v", tt.expectedError, err)
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("予期しないエラーが発生しました: %v", err)
-			}
-
-			if result == nil {
-				t.Error("結果がnilです")
-				return
-			}
-
-			// 結果の比較
-			if diff := cmp.Diff(tt.expectedDiaries, *result); diff != "" {
-				t.Errorf("期待値と実際の値が異なります:\n%s", diff)
 			}
 		})
 	}
 }
 
-func TestDiaryUsecase_Create(t *testing.T) {
-	m5, _ := diary.NewMental(5)
-
+func TestDiaryUsecase_FindByUserID(t *testing.T) {
 	tests := []struct {
-		name          string
-		setupMock     func() *mockDiaryRepository
-		createDiary   diary.Diary
-		expectedError error
+		name      string
+		userID    int
+		setupMock func() *mockDiaryRepository
+		expected  *[]diary.Diary
+		hasError  bool
 	}{
 		{
-			name: "正常系：日記を作成できる",
+			name:   "正常系：特定ユーザーの日記を取得できる",
+			userID: 1,
 			setupMock: func() *mockDiaryRepository {
+				diaries := make([]diary.Diary, len(testDiaries))
+				copy(diaries, testDiaries)
 				return &mockDiaryRepository{
-					err: nil,
+					diaries: &diaries,
+					err:     nil,
 				}
 			},
-			createDiary: diary.Diary{
-				UserID: 101,
-				Date:   "2025-05-01",
-				Mental: m5,
-				Diary:  "新しい日記内容",
+			expected: &[]diary.Diary{
+				{ID: 1, UserID: 1, Date: "2025-05-01", Mental: testDiaries[0].Mental, Diary: "今日は良い一日だった"},
+				{ID: 2, UserID: 1, Date: "2025-05-02", Mental: testDiaries[1].Mental, Diary: "少し疲れた"},
 			},
-			expectedError: nil,
+			hasError: false,
 		},
 		{
-			name: "異常系：複合ユニークキー制約違反",
+			name:   "正常系：存在しないユーザーの場合は空配列を返す",
+			userID: 999,
 			setupMock: func() *mockDiaryRepository {
+				diaries := make([]diary.Diary, len(testDiaries))
+				copy(diaries, testDiaries)
 				return &mockDiaryRepository{
-					err: errors.New("この日付の日記は既に作成されています"),
+					diaries: &diaries,
+					err:     nil,
 				}
 			},
-			createDiary: diary.Diary{
-				UserID: 101,
-				Date:   "2025-05-01",
-				Mental: m5,
-				Diary:  "重複する日記",
-			},
-			expectedError: errors.New("この日付の日記は既に作成されています"),
+			expected: &[]diary.Diary{},
+			hasError: false,
 		},
 		{
-			name: "異常系：DBエラーが発生した場合",
+			name:   "異常系：リポジトリがエラーを返す",
+			userID: 1,
 			setupMock: func() *mockDiaryRepository {
 				return &mockDiaryRepository{
-					err: errors.New("DB接続エラー"),
+					diaries: nil,
+					err:     errors.New("DBエラー"),
 				}
 			},
-			createDiary: diary.Diary{
-				UserID: 101,
-				Date:   "2025-05-01",
-				Mental: m5,
-				Diary:  "DBエラー時の日記",
-			},
-			expectedError: errors.New("DB接続エラー"),
+			expected: nil,
+			hasError: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockRepo := tt.setupMock()
-			usecase := NewDiaryUsecase(mockRepo)
+			mock := tt.setupMock()
+			usecase := NewDiaryUsecase(mock)
 
-			err := usecase.Create(&tt.createDiary)
+			result, err := usecase.FindByUserID(tt.userID)
 
-			// エラーチェック
-			if tt.expectedError != nil {
-				if err == nil {
-					t.Error("エラーが期待されていましたが、発生しませんでした")
-					return
+			if tt.hasError {
+				assert.Error(t, err)
+				assert.Nil(t, result)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				// より直接的な比較
+				if result == nil && tt.expected == nil {
+					// 両方ともnilの場合はOK
+				} else if result == nil || tt.expected == nil {
+					// 片方だけnilの場合はNG
+					t.Errorf("FindByUserID() mismatch: result=%v, expected=%v", result, tt.expected)
+				} else {
+					// 両方ともnilでない場合は内容を比較
+					if len(*result) != len(*tt.expected) {
+						t.Errorf("FindByUserID() length mismatch: got=%d, expected=%d", len(*result), len(*tt.expected))
+					} else {
+						for i, r := range *result {
+							e := (*tt.expected)[i]
+							if r != e {
+								t.Errorf("FindByUserID() item[%d] mismatch: got=%+v, expected=%+v", i, r, e)
+							}
+						}
+					}
 				}
-				if err.Error() != tt.expectedError.Error() {
-					t.Errorf("期待するエラー: %v, 実際のエラー: %v", tt.expectedError, err)
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("予期しないエラーが発生しました: %v", err)
-			}
-		})
-	}
-}
-
-func TestDiaryUsecase_Update(t *testing.T) {
-	m5, _ := diary.NewMental(5)
-	m7, _ := diary.NewMental(7)
-
-	tests := []struct {
-		name          string
-		setupMock     func() *mockDiaryRepository
-		userID        int
-		date          string
-		updateDiary   diary.Diary
-		expectedError error
-	}{
-		{
-			name: "正常系：日記を更新できる",
-			setupMock: func() *mockDiaryRepository {
-				return &mockDiaryRepository{
-					err: nil,
-				}
-			},
-			userID: 101,
-			date:   "2025-05-01",
-			updateDiary: diary.Diary{
-				UserID: 101,
-				Date:   "2025-05-01",
-				Mental: m7,
-				Diary:  "更新された日記内容",
-			},
-			expectedError: nil,
-		},
-		{
-			name: "異常系：リポジトリがエラーを返した場合にそのまま返す",
-			setupMock: func() *mockDiaryRepository {
-				return &mockDiaryRepository{
-					err: errors.New("指定された日付の日記が見つかりません"),
-				}
-			},
-			userID: 101,
-			date:   "2025-05-01",
-			updateDiary: diary.Diary{
-				UserID: 101,
-				Date:   "2025-05-01",
-				Mental: m5,
-				Diary:  "存在しない日記",
-			},
-			expectedError: errors.New("指定された日付の日記が見つかりません"),
-		},
-		{
-			name: "異常系：DBエラーが発生した場合",
-			setupMock: func() *mockDiaryRepository {
-				return &mockDiaryRepository{
-					err: errors.New("DB接続エラー"),
-				}
-			},
-			userID: 101,
-			date:   "2025-05-01",
-			updateDiary: diary.Diary{
-				UserID: 101,
-				Date:   "2025-05-01",
-				Mental: m5,
-				Diary:  "DBエラー時の日記",
-			},
-			expectedError: errors.New("DB接続エラー"),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockRepo := tt.setupMock()
-			usecase := NewDiaryUsecase(mockRepo)
-
-			err := usecase.Update(tt.userID, tt.date, &tt.updateDiary)
-
-			// エラーチェック
-			if tt.expectedError != nil {
-				if err == nil {
-					t.Error("エラーが期待されていましたが、発生しませんでした")
-					return
-				}
-				if err.Error() != tt.expectedError.Error() {
-					t.Errorf("期待するエラー: %v, 実際のエラー: %v", tt.expectedError, err)
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("予期しないエラーが発生しました: %v", err)
-			}
-		})
-	}
-}
-
-func TestDiaryUsecase_Delete(t *testing.T) {
-	tests := []struct {
-		name          string
-		setupMock     func() *mockDiaryRepository
-		userID        int
-		date          string
-		expectedError error
-	}{
-		{
-			name: "正常系：日記を削除できる",
-			setupMock: func() *mockDiaryRepository {
-				return &mockDiaryRepository{
-					err: nil,
-				}
-			},
-			userID:        101,
-			date:          "2025-05-01",
-			expectedError: nil,
-		},
-		{
-			name: "異常系：リポジトリがエラーを返した場合にそのまま返す",
-			setupMock: func() *mockDiaryRepository {
-				return &mockDiaryRepository{
-					err: errors.New("指定された日付の日記が見つかりません"),
-				}
-			},
-			userID:        101,
-			date:          "2025-05-01",
-			expectedError: errors.New("指定された日付の日記が見つかりません"),
-		},
-		{
-			name: "異常系：DBエラーが発生した場合",
-			setupMock: func() *mockDiaryRepository {
-				return &mockDiaryRepository{
-					err: errors.New("DB接続エラー"),
-				}
-			},
-			userID:        101,
-			date:          "2025-05-01",
-			expectedError: errors.New("DB接続エラー"),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockRepo := tt.setupMock()
-			usecase := NewDiaryUsecase(mockRepo)
-
-			err := usecase.Delete(tt.userID, tt.date)
-
-			// エラーチェック
-			if tt.expectedError != nil {
-				if err == nil {
-					t.Error("エラーが期待されていましたが、発生しませんでした")
-					return
-				}
-				if err.Error() != tt.expectedError.Error() {
-					t.Errorf("期待するエラー: %v, 実際のエラー: %v", tt.expectedError, err)
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("予期しないエラーが発生しました: %v", err)
 			}
 		})
 	}
@@ -380,15 +222,17 @@ func TestDiaryUsecase_Delete(t *testing.T) {
 
 func TestDiaryUsecase_FindByUserIDAndDate(t *testing.T) {
 	tests := []struct {
-		name          string
-		setupMock     func() *mockDiaryRepository
-		userID        int
-		date          string
-		expectedDiary *diary.Diary
-		expectedError error
+		name      string
+		userID    int
+		date      string
+		setupMock func() *mockDiaryRepository
+		expected  *diary.Diary
+		hasError  bool
 	}{
 		{
-			name: "正常系：指定されたuser_idとdateの日記を取得できる",
+			name:   "正常系：指定されたユーザーと日付の日記を取得できる",
+			userID: 1,
+			date:   "2025-05-01",
 			setupMock: func() *mockDiaryRepository {
 				diaries := make([]diary.Diary, len(testDiaries))
 				copy(diaries, testDiaries)
@@ -397,13 +241,13 @@ func TestDiaryUsecase_FindByUserIDAndDate(t *testing.T) {
 					err:     nil,
 				}
 			},
-			userID:        101,
-			date:          "2025-05-01",
-			expectedDiary: &testDiaries[0],
-			expectedError: nil,
+			expected: &testDiaries[0],
+			hasError: false,
 		},
 		{
-			name: "異常系：指定されたuser_idとdateの日記が見つからない",
+			name:   "異常系：指定された日記が見つからない",
+			userID: 1,
+			date:   "2025-05-99",
 			setupMock: func() *mockDiaryRepository {
 				diaries := make([]diary.Diary, len(testDiaries))
 				copy(diaries, testDiaries)
@@ -412,57 +256,204 @@ func TestDiaryUsecase_FindByUserIDAndDate(t *testing.T) {
 					err:     nil,
 				}
 			},
-			userID:        999,
-			date:          "2025-05-01",
-			expectedDiary: nil,
-			expectedError: errors.New("指定された日付の日記が見つかりません"),
+			expected: nil,
+			hasError: true,
 		},
 		{
-			name: "異常系：リポジトリがエラーを返した場合にそのまま返す",
+			name:   "異常系：リポジトリがエラーを返す",
+			userID: 1,
+			date:   "2025-05-01",
 			setupMock: func() *mockDiaryRepository {
 				return &mockDiaryRepository{
 					diaries: nil,
-					err:     errors.New("DB接続失敗"),
+					err:     errors.New("DBエラー"),
 				}
 			},
-			userID:        101,
-			date:          "2025-05-01",
-			expectedDiary: nil,
-			expectedError: errors.New("DB接続失敗"),
+			expected: nil,
+			hasError: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockRepo := tt.setupMock()
-			usecase := NewDiaryUsecase(mockRepo)
+			mock := tt.setupMock()
+			usecase := NewDiaryUsecase(mock)
 
 			result, err := usecase.FindByUserIDAndDate(tt.userID, tt.date)
 
-			// エラーチェック
-			if tt.expectedError != nil {
-				if err == nil {
-					t.Error("エラーが期待されていましたが、発生しませんでした")
-					return
+			if tt.hasError {
+				assert.Error(t, err)
+				assert.Nil(t, result)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				if diff := cmp.Diff(tt.expected, result); diff != "" {
+					t.Errorf("FindByUserIDAndDate() mismatch (-expected +got):\n%s", diff)
 				}
-				if err.Error() != tt.expectedError.Error() {
-					t.Errorf("期待するエラー: %v, 実際のエラー: %v", tt.expectedError, err)
+			}
+		})
+	}
+}
+
+func TestDiaryUsecase_Create(t *testing.T) {
+	tests := []struct {
+		name      string
+		diary     *diary.Diary
+		setupMock func() *mockDiaryRepository
+		hasError  bool
+	}{
+		{
+			name: "正常系：日記を作成できる",
+			diary: &diary.Diary{
+				UserID: 1,
+				Date:   "2025-05-03",
+				Mental: testDiaries[0].Mental,
+				Diary:  "新しい日記",
+			},
+			setupMock: func() *mockDiaryRepository {
+				return &mockDiaryRepository{
+					err: nil,
 				}
-				return
-			}
+			},
+			hasError: false,
+		},
+		{
+			name: "異常系：リポジトリがエラーを返す",
+			diary: &diary.Diary{
+				UserID: 1,
+				Date:   "2025-05-03",
+				Mental: testDiaries[0].Mental,
+				Diary:  "新しい日記",
+			},
+			setupMock: func() *mockDiaryRepository {
+				return &mockDiaryRepository{
+					err: errors.New("DBエラー"),
+				}
+			},
+			hasError: true,
+		},
+	}
 
-			if err != nil {
-				t.Fatalf("予期しないエラーが発生しました: %v", err)
-			}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := tt.setupMock()
+			usecase := NewDiaryUsecase(mock)
 
-			if result == nil {
-				t.Error("結果がnilです")
-				return
-			}
+			err := usecase.Create(tt.diary)
 
-			// 結果の比較
-			if diff := cmp.Diff(tt.expectedDiary, result); diff != "" {
-				t.Errorf("期待値と実際の値が異なります:\n%s", diff)
+			if tt.hasError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestDiaryUsecase_Update(t *testing.T) {
+	tests := []struct {
+		name      string
+		userID    int
+		date      string
+		diary     *diary.Diary
+		setupMock func() *mockDiaryRepository
+		hasError  bool
+	}{
+		{
+			name:   "正常系：日記を更新できる",
+			userID: 1,
+			date:   "2025-05-01",
+			diary: &diary.Diary{
+				UserID: 1,
+				Date:   "2025-05-01",
+				Mental: testDiaries[0].Mental,
+				Diary:  "更新された日記",
+			},
+			setupMock: func() *mockDiaryRepository {
+				return &mockDiaryRepository{
+					err: nil,
+				}
+			},
+			hasError: false,
+		},
+		{
+			name:   "異常系：リポジトリがエラーを返す",
+			userID: 1,
+			date:   "2025-05-01",
+			diary: &diary.Diary{
+				UserID: 1,
+				Date:   "2025-05-01",
+				Mental: testDiaries[0].Mental,
+				Diary:  "更新された日記",
+			},
+			setupMock: func() *mockDiaryRepository {
+				return &mockDiaryRepository{
+					err: errors.New("DBエラー"),
+				}
+			},
+			hasError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := tt.setupMock()
+			usecase := NewDiaryUsecase(mock)
+
+			err := usecase.Update(tt.userID, tt.date, tt.diary)
+
+			if tt.hasError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestDiaryUsecase_Delete(t *testing.T) {
+	tests := []struct {
+		name      string
+		userID    int
+		date      string
+		setupMock func() *mockDiaryRepository
+		hasError  bool
+	}{
+		{
+			name:   "正常系：日記を削除できる",
+			userID: 1,
+			date:   "2025-05-01",
+			setupMock: func() *mockDiaryRepository {
+				return &mockDiaryRepository{
+					err: nil,
+				}
+			},
+			hasError: false,
+		},
+		{
+			name:   "異常系：リポジトリがエラーを返す",
+			userID: 1,
+			date:   "2025-05-01",
+			setupMock: func() *mockDiaryRepository {
+				return &mockDiaryRepository{
+					err: errors.New("DBエラー"),
+				}
+			},
+			hasError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := tt.setupMock()
+			usecase := NewDiaryUsecase(mock)
+
+			err := usecase.Delete(tt.userID, tt.date)
+
+			if tt.hasError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}

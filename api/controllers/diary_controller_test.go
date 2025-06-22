@@ -24,6 +24,10 @@ func (m *mockDiaryUsecase) FindAll() (*[]diary.Diary, error) {
 	return m.diaries, m.err
 }
 
+func (m *mockDiaryUsecase) FindByUserID(userID int) (*[]diary.Diary, error) {
+	return m.diaries, m.err
+}
+
 func (m *mockDiaryUsecase) FindByUserIDAndDate(userID int, date string) (*diary.Diary, error) {
 	return m.diary, m.err
 }
@@ -45,8 +49,8 @@ var testDiaries = func() []diary.Diary {
 	m5, _ := diary.NewMental(5)
 	m3, _ := diary.NewMental(3)
 	return []diary.Diary{
-		{ID: 1, UserID: 100, Date: "2025-01-01", Mental: m5, Diary: "良い日だった"},
-		{ID: 2, UserID: 101, Date: "2025-01-02", Mental: m3, Diary: "普通の日だった"},
+		{ID: 1, UserID: 1, Date: "2025-01-01", Mental: m5, Diary: "良い日だった"},
+		{ID: 2, UserID: 1, Date: "2025-01-02", Mental: m3, Diary: "普通の日だった"},
 	}
 }()
 
@@ -63,7 +67,8 @@ func TestDiaryController_FindAll(t *testing.T) {
 		name           string
 		setupMock      func() *mockDiaryUsecase
 		expectedStatus int
-		expectedBody   responseBody
+		expectedData   []DiaryResponseDTO
+		expectedError  string
 	}{
 		{
 			name: "正常系：全件取得できる場合は200を返す",
@@ -76,12 +81,11 @@ func TestDiaryController_FindAll(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusOK,
-			expectedBody: responseBody{
-				Data: []DiaryResponseDTO{
-					{ID: 1, UserID: 100, Date: "2025-01-01", Mental: 5, Diary: "良い日だった"},
-					{ID: 2, UserID: 101, Date: "2025-01-02", Mental: 3, Diary: "普通の日だった"},
-				},
+			expectedData: []DiaryResponseDTO{
+				{ID: 1, UserID: 1, Date: "2025-01-01", Mental: 5, Diary: "良い日だった"},
+				{ID: 2, UserID: 1, Date: "2025-01-02", Mental: 3, Diary: "普通の日だった"},
 			},
+			expectedError: "",
 		},
 		{
 			name: "正常系：空のリストを処理できる",
@@ -93,9 +97,8 @@ func TestDiaryController_FindAll(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusOK,
-			expectedBody: responseBody{
-				Data: []DiaryResponseDTO{},
-			},
+			expectedData:   []DiaryResponseDTO{},
+			expectedError:  "",
 		},
 		{
 			name: "異常系：サービスがエラーを返した場合は500を返す",
@@ -106,53 +109,37 @@ func TestDiaryController_FindAll(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusInternalServerError,
-			expectedBody: responseBody{
-				Error: "DBエラー",
-			},
+			expectedData:   nil,
+			expectedError:  "DBエラー",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// モックのセットアップ
-			usecase := tt.setupMock()
-			controller := NewDiaryController(usecase)
+			mock := tt.setupMock()
+			controller := NewDiaryController(mock)
 
-			// テスト用のHTTPリクエストとレスポンス
+			router := gin.New()
+			router.GET("/api/me/diaries", controller.FindAll)
+
+			req, _ := http.NewRequest("GET", "/api/me/diaries", nil)
 			w := httptest.NewRecorder()
-			ctx, _ := gin.CreateTestContext(w)
+			router.ServeHTTP(w, req)
 
-			// コントローラ呼び出し
-			controller.FindAll(ctx)
+			assert.Equal(t, tt.expectedStatus, w.Code)
 
-			// ステータスコードの検証
-			assert.Equal(t, tt.expectedStatus, w.Code, "ステータスコードが期待値と異なります")
-
-			// レスポンスボディの検証
-			var response map[string]json.RawMessage
+			var response responseBody
 			err := json.Unmarshal(w.Body.Bytes(), &response)
-			assert.NoError(t, err, "レスポンスのJSONパースに失敗しました")
+			assert.NoError(t, err)
 
-			if tt.expectedStatus == http.StatusOK {
-				// 正常系の場合
-				var actualDiaries []DiaryResponseDTO
-				err = json.Unmarshal(response["data"], &actualDiaries)
-				assert.NoError(t, err, "Diary配列のJSONパースに失敗しました")
-				assert.Equal(t, len(tt.expectedBody.Data.([]DiaryResponseDTO)), len(actualDiaries), "配列の長さが期待値と異なります")
-				for i, expected := range tt.expectedBody.Data.([]DiaryResponseDTO) {
-					if i < len(actualDiaries) {
-						assert.Equal(t, expected.UserID, actualDiaries[i].UserID, "ユーザーIDが期待値と異なります")
-						assert.Equal(t, expected.Date, actualDiaries[i].Date, "日付が期待値と異なります")
-						assert.Equal(t, int(expected.Mental), int(actualDiaries[i].Mental), "メンタルスコアが期待値と異なります")
-						assert.Equal(t, expected.Diary, actualDiaries[i].Diary, "日記内容が期待値と異なります")
-					}
-				}
+			if tt.expectedError != "" {
+				assert.Equal(t, tt.expectedError, response.Error)
 			} else {
-				// 異常系の場合
-				var errorResponse responseBody
-				err = json.Unmarshal(w.Body.Bytes(), &errorResponse)
-				assert.NoError(t, err, "エラーレスポンスのJSONパースに失敗しました")
-				assert.Equal(t, tt.expectedBody.Error, errorResponse.Error, "エラーメッセージが期待値と異なります")
+				// data部分を[]DiaryResponseDTOにデコードして比較
+				dataBytes, _ := json.Marshal(response.Data)
+				var actual []DiaryResponseDTO
+				_ = json.Unmarshal(dataBytes, &actual)
+				assert.Equal(t, tt.expectedData, actual)
 			}
 		})
 	}
@@ -166,7 +153,8 @@ func TestDiaryController_Create(t *testing.T) {
 		setupMock      func() *mockDiaryUsecase
 		requestBody    CreateDiaryDTO
 		expectedStatus int
-		expectedBody   responseBody
+		expectedData   *DiaryResponseDTO
+		expectedError  string
 	}{
 		{
 			name: "正常系：日記を作成できる",
@@ -176,38 +164,29 @@ func TestDiaryController_Create(t *testing.T) {
 				}
 			},
 			requestBody: CreateDiaryDTO{
-				UserID: 100,
 				Date:   "2025-01-01",
 				Mental: 5,
 				Diary:  "良い日だった",
 			},
 			expectedStatus: http.StatusCreated,
-			expectedBody: responseBody{
-				Data: DiaryResponseDTO{
-					UserID: 100,
-					Date:   "2025-01-01",
-					Mental: 5,
-					Diary:  "良い日だった",
-				},
-			},
+			expectedData:   &DiaryResponseDTO{ID: 0, UserID: 1, Date: "2025-01-01", Mental: 5, Diary: "良い日だった"},
+			expectedError:  "",
 		},
 		{
-			name: "異常系：無効なリクエストデータ",
+			name: "異常系：無効なメンタルスコア",
 			setupMock: func() *mockDiaryUsecase {
 				return &mockDiaryUsecase{
 					err: nil,
 				}
 			},
 			requestBody: CreateDiaryDTO{
-				UserID: 100,
 				Date:   "2025-01-01",
 				Mental: 11, // 無効なメンタルスコア
 				Diary:  "良い日だった",
 			},
 			expectedStatus: http.StatusBadRequest,
-			expectedBody: responseBody{
-				Error: "mental value must be between 1 and 10",
-			},
+			expectedData:   nil,
+			expectedError:  "mental value must be between 1 and 10",
 		},
 		{
 			name: "異常系：複合ユニークキー制約違反",
@@ -217,15 +196,13 @@ func TestDiaryController_Create(t *testing.T) {
 				}
 			},
 			requestBody: CreateDiaryDTO{
-				UserID: 100,
 				Date:   "2025-01-01",
 				Mental: 5,
 				Diary:  "良い日だった",
 			},
 			expectedStatus: http.StatusConflict,
-			expectedBody: responseBody{
-				Error: "この日付の日記は既に作成されています",
-			},
+			expectedData:   nil,
+			expectedError:  "この日付の日記は既に作成されています",
 		},
 		{
 			name: "異常系：サービスがエラーを返した場合は500を返す",
@@ -235,78 +212,43 @@ func TestDiaryController_Create(t *testing.T) {
 				}
 			},
 			requestBody: CreateDiaryDTO{
-				UserID: 100,
 				Date:   "2025-01-01",
 				Mental: 5,
 				Diary:  "良い日だった",
 			},
 			expectedStatus: http.StatusInternalServerError,
-			expectedBody: responseBody{
-				Error: "DBエラー",
-			},
+			expectedData:   nil,
+			expectedError:  "DBエラー",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// モックのセットアップ
-			usecase := tt.setupMock()
-			controller := NewDiaryController(usecase)
+			mock := tt.setupMock()
+			controller := NewDiaryController(mock)
 
-			// テスト用のHTTPリクエストとレスポンス
+			router := gin.New()
+			router.POST("/api/me/diaries", controller.Create)
+
+			jsonData, _ := json.Marshal(tt.requestBody)
+			req, _ := http.NewRequest("POST", "/api/me/diaries", bytes.NewBuffer(jsonData))
+			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
-			ctx, _ := gin.CreateTestContext(w)
+			router.ServeHTTP(w, req)
 
-			// リクエストボディの設定
-			jsonData, err := json.Marshal(tt.requestBody)
-			if err != nil {
-				t.Fatal(err)
-			}
-			ctx.Request = httptest.NewRequest("POST", "/", bytes.NewBuffer(jsonData))
-			ctx.Request.Header.Set("Content-Type", "application/json")
+			assert.Equal(t, tt.expectedStatus, w.Code)
 
-			// コントローラ呼び出し
-			controller.Create(ctx)
+			var response responseBody
+			err := json.Unmarshal(w.Body.Bytes(), &response)
+			assert.NoError(t, err)
 
-			// ステータスコードの検証
-			assert.Equal(t, tt.expectedStatus, w.Code, "ステータスコードが期待値と異なります")
-
-			// レスポンスボディの検証
-			var response map[string]json.RawMessage
-			err = json.Unmarshal(w.Body.Bytes(), &response)
-			assert.NoError(t, err, "レスポンスのJSONパースに失敗しました")
-
-			if tt.expectedBody.Error != "" {
-				var errorResponse responseBody
-				err = json.Unmarshal(w.Body.Bytes(), &errorResponse)
-				assert.NoError(t, err, "エラーレスポンスのJSONパースに失敗しました")
-				assert.Equal(t, tt.expectedBody.Error, errorResponse.Error, "エラーメッセージが期待値と異なります")
+			if tt.expectedError != "" {
+				assert.Equal(t, tt.expectedError, response.Error)
 			} else {
-				// 成功レスポンスの場合は、期待値の型に応じて比較
-				if expectedDiary, ok := tt.expectedBody.Data.(DiaryResponseDTO); ok {
-					// 単一のDiaryResponseDTOオブジェクトの場合
-					var actualDiary DiaryResponseDTO
-					err = json.Unmarshal(response["data"], &actualDiary)
-					assert.NoError(t, err, "DiaryResponseDTOオブジェクトのJSONパースに失敗しました")
-					assert.Equal(t, expectedDiary.UserID, actualDiary.UserID, "ユーザーIDが期待値と異なります")
-					assert.Equal(t, expectedDiary.Date, actualDiary.Date, "日付が期待値と異なります")
-					assert.Equal(t, int(expectedDiary.Mental), int(actualDiary.Mental), "メンタルスコアが期待値と異なります")
-					assert.Equal(t, expectedDiary.Diary, actualDiary.Diary, "日記内容が期待値と異なります")
-				} else if expectedDiaries, ok := tt.expectedBody.Data.([]DiaryResponseDTO); ok {
-					// DiaryResponseDTO配列の場合
-					var actualDiaries []DiaryResponseDTO
-					err = json.Unmarshal(response["data"], &actualDiaries)
-					assert.NoError(t, err, "DiaryResponseDTO配列のJSONパースに失敗しました")
-					assert.Equal(t, len(expectedDiaries), len(actualDiaries), "配列の長さが期待値と異なります")
-					for i, expected := range expectedDiaries {
-						if i < len(actualDiaries) {
-							assert.Equal(t, expected.UserID, actualDiaries[i].UserID, "ユーザーIDが期待値と異なります")
-							assert.Equal(t, expected.Date, actualDiaries[i].Date, "日付が期待値と異なります")
-							assert.Equal(t, int(expected.Mental), int(actualDiaries[i].Mental), "メンタルスコアが期待値と異なります")
-							assert.Equal(t, expected.Diary, actualDiaries[i].Diary, "日記内容が期待値と異なります")
-						}
-					}
-				}
+				dataBytes, _ := json.Marshal(response.Data)
+				var actual DiaryResponseDTO
+				_ = json.Unmarshal(dataBytes, &actual)
+				assert.Equal(t, *tt.expectedData, actual)
 			}
 		})
 	}
@@ -318,11 +260,11 @@ func TestDiaryController_Update(t *testing.T) {
 	tests := []struct {
 		name           string
 		setupMock      func() *mockDiaryUsecase
-		userID         string
 		date           string
 		requestBody    UpdateDiaryDTO
 		expectedStatus int
-		expectedBody   responseBody
+		expectedData   *DiaryResponseDTO
+		expectedError  string
 	}{
 		{
 			name: "正常系：日記を更新できる",
@@ -331,39 +273,14 @@ func TestDiaryController_Update(t *testing.T) {
 					err: nil,
 				}
 			},
-			userID: "100",
-			date:   "2025-01-01",
+			date: "2025-01-01",
 			requestBody: UpdateDiaryDTO{
 				Mental: 7,
 				Diary:  "更新された日記",
 			},
 			expectedStatus: http.StatusOK,
-			expectedBody: responseBody{
-				Data: DiaryResponseDTO{
-					UserID: 100,
-					Date:   "2025-01-01",
-					Mental: 7,
-					Diary:  "更新された日記",
-				},
-			},
-		},
-		{
-			name: "異常系：無効なユーザーID",
-			setupMock: func() *mockDiaryUsecase {
-				return &mockDiaryUsecase{
-					err: nil,
-				}
-			},
-			userID: "invalid",
-			date:   "2025-01-01",
-			requestBody: UpdateDiaryDTO{
-				Mental: 7,
-				Diary:  "更新された日記",
-			},
-			expectedStatus: http.StatusBadRequest,
-			expectedBody: responseBody{
-				Error: "無効なユーザーIDです",
-			},
+			expectedData:   &DiaryResponseDTO{ID: 0, UserID: 1, Date: "2025-01-01", Mental: 7, Diary: "更新された日記"},
+			expectedError:  "",
 		},
 		{
 			name: "異常系：無効なメンタルスコア",
@@ -372,16 +289,14 @@ func TestDiaryController_Update(t *testing.T) {
 					err: nil,
 				}
 			},
-			userID: "100",
-			date:   "2025-01-01",
+			date: "2025-01-01",
 			requestBody: UpdateDiaryDTO{
 				Mental: 11, // 無効なメンタルスコア
 				Diary:  "更新された日記",
 			},
 			expectedStatus: http.StatusBadRequest,
-			expectedBody: responseBody{
-				Error: "mental value must be between 1 and 10",
-			},
+			expectedData:   nil,
+			expectedError:  "mental value must be between 1 and 10",
 		},
 		{
 			name: "異常系：日記が見つからない",
@@ -390,16 +305,14 @@ func TestDiaryController_Update(t *testing.T) {
 					err: errors.New("指定された日付の日記が見つかりません"),
 				}
 			},
-			userID: "100",
-			date:   "2025-01-01",
+			date: "2025-01-01",
 			requestBody: UpdateDiaryDTO{
 				Mental: 7,
 				Diary:  "更新された日記",
 			},
 			expectedStatus: http.StatusNotFound,
-			expectedBody: responseBody{
-				Error: "指定された日付の日記が見つかりません",
-			},
+			expectedData:   nil,
+			expectedError:  "指定された日付の日記が見つかりません",
 		},
 		{
 			name: "異常系：サービスがエラーを返した場合は500を返す",
@@ -408,85 +321,44 @@ func TestDiaryController_Update(t *testing.T) {
 					err: errors.New("DBエラー"),
 				}
 			},
-			userID: "100",
-			date:   "2025-01-01",
+			date: "2025-01-01",
 			requestBody: UpdateDiaryDTO{
 				Mental: 7,
 				Diary:  "更新された日記",
 			},
 			expectedStatus: http.StatusInternalServerError,
-			expectedBody: responseBody{
-				Error: "DBエラー",
-			},
+			expectedData:   nil,
+			expectedError:  "DBエラー",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// モックのセットアップ
-			usecase := tt.setupMock()
-			controller := NewDiaryController(usecase)
+			mock := tt.setupMock()
+			controller := NewDiaryController(mock)
 
-			// テスト用のHTTPリクエストとレスポンス
+			router := gin.New()
+			router.PUT("/api/me/diaries/:date", controller.Update)
+
+			jsonData, _ := json.Marshal(tt.requestBody)
+			req, _ := http.NewRequest("PUT", "/api/me/diaries/"+tt.date, bytes.NewBuffer(jsonData))
+			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
-			ctx, _ := gin.CreateTestContext(w)
+			router.ServeHTTP(w, req)
 
-			// パラメータの設定
-			ctx.Params = gin.Params{
-				{Key: "user_id", Value: tt.userID},
-				{Key: "date", Value: tt.date},
-			}
+			assert.Equal(t, tt.expectedStatus, w.Code)
 
-			// リクエストボディの設定
-			jsonData, err := json.Marshal(tt.requestBody)
-			if err != nil {
-				t.Fatal(err)
-			}
-			ctx.Request = httptest.NewRequest("PUT", "/", bytes.NewBuffer(jsonData))
-			ctx.Request.Header.Set("Content-Type", "application/json")
+			var response responseBody
+			err := json.Unmarshal(w.Body.Bytes(), &response)
+			assert.NoError(t, err)
 
-			// コントローラ呼び出し
-			controller.Update(ctx)
-
-			// ステータスコードの検証
-			assert.Equal(t, tt.expectedStatus, w.Code, "ステータスコードが期待値と異なります")
-
-			// レスポンスボディの検証
-			var response map[string]json.RawMessage
-			err = json.Unmarshal(w.Body.Bytes(), &response)
-			assert.NoError(t, err, "レスポンスのJSONパースに失敗しました")
-
-			if tt.expectedBody.Error != "" {
-				var errorResponse responseBody
-				err = json.Unmarshal(w.Body.Bytes(), &errorResponse)
-				assert.NoError(t, err, "エラーレスポンスのJSONパースに失敗しました")
-				assert.Equal(t, tt.expectedBody.Error, errorResponse.Error, "エラーメッセージが期待値と異なります")
+			if tt.expectedError != "" {
+				assert.Equal(t, tt.expectedError, response.Error)
 			} else {
-				// 成功レスポンスの場合は、期待値の型に応じて比較
-				if expectedDiary, ok := tt.expectedBody.Data.(DiaryResponseDTO); ok {
-					// 単一のDiaryResponseDTOオブジェクトの場合
-					var actualDiary DiaryResponseDTO
-					err = json.Unmarshal(response["data"], &actualDiary)
-					assert.NoError(t, err, "DiaryResponseDTOオブジェクトのJSONパースに失敗しました")
-					assert.Equal(t, expectedDiary.UserID, actualDiary.UserID, "ユーザーIDが期待値と異なります")
-					assert.Equal(t, expectedDiary.Date, actualDiary.Date, "日付が期待値と異なります")
-					assert.Equal(t, int(expectedDiary.Mental), int(actualDiary.Mental), "メンタルスコアが期待値と異なります")
-					assert.Equal(t, expectedDiary.Diary, actualDiary.Diary, "日記内容が期待値と異なります")
-				} else if expectedDiaries, ok := tt.expectedBody.Data.([]DiaryResponseDTO); ok {
-					// DiaryResponseDTO配列の場合
-					var actualDiaries []DiaryResponseDTO
-					err = json.Unmarshal(response["data"], &actualDiaries)
-					assert.NoError(t, err, "DiaryResponseDTO配列のJSONパースに失敗しました")
-					assert.Equal(t, len(expectedDiaries), len(actualDiaries), "配列の長さが期待値と異なります")
-					for i, expected := range expectedDiaries {
-						if i < len(actualDiaries) {
-							assert.Equal(t, expected.UserID, actualDiaries[i].UserID, "ユーザーIDが期待値と異なります")
-							assert.Equal(t, expected.Date, actualDiaries[i].Date, "日付が期待値と異なります")
-							assert.Equal(t, int(expected.Mental), int(actualDiaries[i].Mental), "メンタルスコアが期待値と異なります")
-							assert.Equal(t, expected.Diary, actualDiaries[i].Diary, "日記内容が期待値と異なります")
-						}
-					}
-				}
+				dataBytes, _ := json.Marshal(response.Data)
+				var actual DiaryResponseDTO
+				_ = json.Unmarshal(dataBytes, &actual)
+				assert.Equal(t, *tt.expectedData, actual)
 			}
 		})
 	}
@@ -496,12 +368,12 @@ func TestDiaryController_Delete(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	tests := []struct {
-		name           string
-		setupMock      func() *mockDiaryUsecase
-		userID         string
-		date           string
-		expectedStatus int
-		expectedBody   responseBody
+		name            string
+		setupMock       func() *mockDiaryUsecase
+		date            string
+		expectedStatus  int
+		expectedMessage string
+		expectedError   string
 	}{
 		{
 			name: "正常系：日記を削除できる",
@@ -510,26 +382,10 @@ func TestDiaryController_Delete(t *testing.T) {
 					err: nil,
 				}
 			},
-			userID:         "100",
-			date:           "2025-01-01",
-			expectedStatus: http.StatusOK,
-			expectedBody: responseBody{
-				Data: map[string]string{"message": "日記が正常に削除されました"},
-			},
-		},
-		{
-			name: "異常系：無効なユーザーID",
-			setupMock: func() *mockDiaryUsecase {
-				return &mockDiaryUsecase{
-					err: nil,
-				}
-			},
-			userID:         "invalid",
-			date:           "2025-01-01",
-			expectedStatus: http.StatusBadRequest,
-			expectedBody: responseBody{
-				Error: "無効なユーザーIDです",
-			},
+			date:            "2025-01-01",
+			expectedStatus:  http.StatusOK,
+			expectedMessage: "日記が正常に削除されました",
+			expectedError:   "",
 		},
 		{
 			name: "異常系：日記が見つからない",
@@ -538,12 +394,10 @@ func TestDiaryController_Delete(t *testing.T) {
 					err: errors.New("指定された日付の日記が見つかりません"),
 				}
 			},
-			userID:         "100",
-			date:           "2025-01-01",
-			expectedStatus: http.StatusNotFound,
-			expectedBody: responseBody{
-				Error: "指定された日付の日記が見つかりません",
-			},
+			date:            "2025-01-01",
+			expectedStatus:  http.StatusNotFound,
+			expectedMessage: "",
+			expectedError:   "指定された日付の日記が見つかりません",
 		},
 		{
 			name: "異常系：サービスがエラーを返した場合は500を返す",
@@ -552,55 +406,38 @@ func TestDiaryController_Delete(t *testing.T) {
 					err: errors.New("DBエラー"),
 				}
 			},
-			userID:         "100",
-			date:           "2025-01-01",
-			expectedStatus: http.StatusInternalServerError,
-			expectedBody: responseBody{
-				Error: "DBエラー",
-			},
+			date:            "2025-01-01",
+			expectedStatus:  http.StatusInternalServerError,
+			expectedMessage: "",
+			expectedError:   "DBエラー",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// モックのセットアップ
-			usecase := tt.setupMock()
-			controller := NewDiaryController(usecase)
+			mock := tt.setupMock()
+			controller := NewDiaryController(mock)
 
-			// テスト用のHTTPリクエストとレスポンス
+			router := gin.New()
+			router.DELETE("/api/me/diaries/:date", controller.Delete)
+
+			req, _ := http.NewRequest("DELETE", "/api/me/diaries/"+tt.date, nil)
 			w := httptest.NewRecorder()
-			ctx, _ := gin.CreateTestContext(w)
+			router.ServeHTTP(w, req)
 
-			// パラメータの設定
-			ctx.Params = gin.Params{
-				{Key: "user_id", Value: tt.userID},
-				{Key: "date", Value: tt.date},
-			}
+			assert.Equal(t, tt.expectedStatus, w.Code)
 
-			// リクエストの設定
-			ctx.Request = httptest.NewRequest("DELETE", "/", nil)
+			var response responseBody
+			err := json.Unmarshal(w.Body.Bytes(), &response)
+			assert.NoError(t, err)
 
-			// コントローラ呼び出し
-			controller.Delete(ctx)
-
-			// ステータスコードの検証
-			assert.Equal(t, tt.expectedStatus, w.Code, "ステータスコードが期待値と異なります")
-
-			// レスポンスボディの検証
-			if tt.expectedBody.Error != "" {
-				var errorResponse responseBody
-				err := json.Unmarshal(w.Body.Bytes(), &errorResponse)
-				assert.NoError(t, err, "エラーレスポンスのJSONパースに失敗しました")
-				assert.Equal(t, tt.expectedBody.Error, errorResponse.Error, "エラーメッセージが期待値と異なります")
+			if tt.expectedError != "" {
+				assert.Equal(t, tt.expectedError, response.Error)
 			} else {
-				// 成功レスポンスの場合
-				var successResponse map[string]interface{}
-				err := json.Unmarshal(w.Body.Bytes(), &successResponse)
-				assert.NoError(t, err, "成功レスポンスのJSONパースに失敗しました")
-
-				if expectedMessage, ok := tt.expectedBody.Data.(map[string]string); ok {
-					assert.Equal(t, expectedMessage["message"], successResponse["message"], "メッセージが期待値と異なります")
-				}
+				dataBytes, _ := json.Marshal(response.Data)
+				var data map[string]string
+				_ = json.Unmarshal(dataBytes, &data)
+				assert.Equal(t, tt.expectedMessage, data["message"])
 			}
 		})
 	}
@@ -612,18 +449,18 @@ func TestDiaryController_FindByUserIDAndDate(t *testing.T) {
 	tests := []struct {
 		name           string
 		setupMock      func() *mockDiaryUsecase
-		userID         string
 		date           string
 		expectedStatus int
-		expectedBody   responseBody
+		expectedData   *DiaryResponseDTO
+		expectedError  string
 	}{
 		{
-			name: "正常系：指定されたuser_idとdateの日記を取得できる",
+			name: "正常系：指定されたdateの日記を取得できる",
 			setupMock: func() *mockDiaryUsecase {
 				m5, _ := diary.NewMental(5)
 				testDiary := diary.Diary{
 					ID:     1,
-					UserID: 100,
+					UserID: 1,
 					Date:   "2025-01-01",
 					Mental: m5,
 					Diary:  "良い日だった",
@@ -633,32 +470,10 @@ func TestDiaryController_FindByUserIDAndDate(t *testing.T) {
 					err:   nil,
 				}
 			},
-			userID:         "100",
 			date:           "2025-01-01",
 			expectedStatus: http.StatusOK,
-			expectedBody: responseBody{
-				Data: DiaryResponseDTO{
-					ID:     1,
-					UserID: 100,
-					Date:   "2025-01-01",
-					Mental: 5,
-					Diary:  "良い日だった",
-				},
-			},
-		},
-		{
-			name: "異常系：無効なユーザーID",
-			setupMock: func() *mockDiaryUsecase {
-				return &mockDiaryUsecase{
-					err: nil,
-				}
-			},
-			userID:         "invalid",
-			date:           "2025-01-01",
-			expectedStatus: http.StatusBadRequest,
-			expectedBody: responseBody{
-				Error: "無効なユーザーIDです",
-			},
+			expectedData:   &DiaryResponseDTO{ID: 1, UserID: 1, Date: "2025-01-01", Mental: 5, Diary: "良い日だった"},
+			expectedError:  "",
 		},
 		{
 			name: "異常系：日記が見つからない",
@@ -667,12 +482,10 @@ func TestDiaryController_FindByUserIDAndDate(t *testing.T) {
 					err: errors.New("指定された日付の日記が見つかりません"),
 				}
 			},
-			userID:         "100",
 			date:           "2025-01-01",
 			expectedStatus: http.StatusNotFound,
-			expectedBody: responseBody{
-				Error: "指定された日付の日記が見つかりません",
-			},
+			expectedData:   nil,
+			expectedError:  "指定された日付の日記が見つかりません",
 		},
 		{
 			name: "異常系：サービスがエラーを返した場合は500を返す",
@@ -681,61 +494,38 @@ func TestDiaryController_FindByUserIDAndDate(t *testing.T) {
 					err: errors.New("DBエラー"),
 				}
 			},
-			userID:         "100",
 			date:           "2025-01-01",
 			expectedStatus: http.StatusInternalServerError,
-			expectedBody: responseBody{
-				Error: "DBエラー",
-			},
+			expectedData:   nil,
+			expectedError:  "DBエラー",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// モックのセットアップ
-			usecase := tt.setupMock()
-			controller := NewDiaryController(usecase)
+			mock := tt.setupMock()
+			controller := NewDiaryController(mock)
 
-			// テスト用のHTTPリクエストとレスポンス
+			router := gin.New()
+			router.GET("/api/me/diaries/:date", controller.FindByUserIDAndDate)
+
+			req, _ := http.NewRequest("GET", "/api/me/diaries/"+tt.date, nil)
 			w := httptest.NewRecorder()
-			ctx, _ := gin.CreateTestContext(w)
+			router.ServeHTTP(w, req)
 
-			// パラメータの設定
-			ctx.Params = gin.Params{
-				{Key: "user_id", Value: tt.userID},
-				{Key: "date", Value: tt.date},
-			}
+			assert.Equal(t, tt.expectedStatus, w.Code)
 
-			// リクエストの設定
-			ctx.Request = httptest.NewRequest("GET", "/", nil)
-
-			// コントローラ呼び出し
-			controller.FindByUserIDAndDate(ctx)
-
-			// ステータスコードの検証
-			assert.Equal(t, tt.expectedStatus, w.Code, "ステータスコードが期待値と異なります")
-
-			// レスポンスボディの検証
-			var response map[string]json.RawMessage
+			var response responseBody
 			err := json.Unmarshal(w.Body.Bytes(), &response)
-			assert.NoError(t, err, "レスポンスのJSONパースに失敗しました")
+			assert.NoError(t, err)
 
-			if tt.expectedBody.Error != "" {
-				var errorResponse responseBody
-				err = json.Unmarshal(w.Body.Bytes(), &errorResponse)
-				assert.NoError(t, err, "エラーレスポンスのJSONパースに失敗しました")
-				assert.Equal(t, tt.expectedBody.Error, errorResponse.Error, "エラーメッセージが期待値と異なります")
+			if tt.expectedError != "" {
+				assert.Equal(t, tt.expectedError, response.Error)
 			} else {
-				// 成功レスポンスの場合
-				if expectedDiary, ok := tt.expectedBody.Data.(DiaryResponseDTO); ok {
-					var actualDiary DiaryResponseDTO
-					err = json.Unmarshal(response["data"], &actualDiary)
-					assert.NoError(t, err, "DiaryResponseDTOオブジェクトのJSONパースに失敗しました")
-					assert.Equal(t, expectedDiary.UserID, actualDiary.UserID, "ユーザーIDが期待値と異なります")
-					assert.Equal(t, expectedDiary.Date, actualDiary.Date, "日付が期待値と異なります")
-					assert.Equal(t, int(expectedDiary.Mental), int(actualDiary.Mental), "メンタルスコアが期待値と異なります")
-					assert.Equal(t, expectedDiary.Diary, actualDiary.Diary, "日記内容が期待値と異なります")
-				}
+				dataBytes, _ := json.Marshal(response.Data)
+				var actual DiaryResponseDTO
+				_ = json.Unmarshal(dataBytes, &actual)
+				assert.Equal(t, *tt.expectedData, actual)
 			}
 		})
 	}

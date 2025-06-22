@@ -4,7 +4,6 @@ import (
 	"emotra-backend/domain/diary"
 	"emotra-backend/usecases"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -19,7 +18,9 @@ func NewDiaryController(usecase usecases.IDiaryUsecase) *DiaryController {
 }
 
 func (c *DiaryController) FindAll(ctx *gin.Context) {
-	diaries, err := c.usecase.FindAll()
+	// ハードコードでuser_id=1を使用
+	userID := 1
+	diaries, err := c.usecase.FindByUserID(userID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -34,15 +35,9 @@ func (c *DiaryController) FindAll(ctx *gin.Context) {
 }
 
 func (c *DiaryController) FindByUserIDAndDate(ctx *gin.Context) {
-	// URLパラメータからuser_idとdateを取得
-	userIDStr := ctx.Param("user_id")
+	// ハードコードでuser_id=1を使用
+	userID := 1
 	date := ctx.Param("date")
-
-	userID, err := strconv.Atoi(userIDStr)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "無効なユーザーIDです"})
-		return
-	}
 
 	diary, err := c.usecase.FindByUserIDAndDate(userID, date)
 	if err != nil {
@@ -58,7 +53,6 @@ func (c *DiaryController) FindByUserIDAndDate(ctx *gin.Context) {
 }
 
 type CreateDiaryDTO struct {
-	UserID int    `json:"user_id"`
 	Date   string `json:"date"`
 	Mental int    `json:"mental"`
 	Diary  string `json:"diary"`
@@ -99,8 +93,11 @@ func (c *DiaryController) Create(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	// ハードコードでuser_id=1を使用
+	userID := 1
 	newDiary := diary.Diary{
-		UserID: req.UserID,
+		UserID: userID,
 		Date:   req.Date,
 		Mental: mental,
 		Diary:  req.Diary,
@@ -119,15 +116,9 @@ func (c *DiaryController) Create(ctx *gin.Context) {
 }
 
 func (c *DiaryController) Update(ctx *gin.Context) {
-	// URLパラメータからuser_idとdateを取得
-	userIDStr := ctx.Param("user_id")
+	// ハードコードでuser_id=1を使用
+	userID := 1
 	date := ctx.Param("date")
-
-	userID, err := strconv.Atoi(userIDStr)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "無効なユーザーIDです"})
-		return
-	}
 
 	var req UpdateDiaryDTO
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -162,17 +153,11 @@ func (c *DiaryController) Update(ctx *gin.Context) {
 }
 
 func (c *DiaryController) Delete(ctx *gin.Context) {
-	// URLパラメータからuser_idとdateを取得
-	userIDStr := ctx.Param("user_id")
+	// ハードコードでuser_id=1を使用
+	userID := 1
 	date := ctx.Param("date")
 
-	userID, err := strconv.Atoi(userIDStr)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "無効なユーザーIDです"})
-		return
-	}
-
-	err = c.usecase.Delete(userID, date)
+	err := c.usecase.Delete(userID, date)
 	if err != nil {
 		if strings.Contains(err.Error(), "指定された日付の日記が見つかりません") {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -182,5 +167,5 @@ func (c *DiaryController) Delete(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"message": "日記が正常に削除されました"})
+	ctx.JSON(http.StatusOK, gin.H{"data": gin.H{"message": "日記が正常に削除されました"}})
 }
