@@ -8,7 +8,7 @@ import (
 func SetupSwaggerEndpoints(router *gin.Engine) {
 	// OpenAPI仕様書を提供するエンドポイント
 	router.GET("/openapi.yml", func(c *gin.Context) {
-		c.File("doc/openapi.yml")
+		c.File("openapi.yml")
 	})
 
 	// SwaggerUIを提供するエンドポイント
