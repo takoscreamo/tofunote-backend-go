@@ -33,6 +33,10 @@
 - `http://localhost:8080/swagger`にアクセスしてSwagger UIで手動でAPIをテストできる
 - `http://localhost:8080/openapi.yml`にアクセスしてOpenAPI仕様書を確認できる
 
+## VSCode REST ClientによるAPIの手動テストのやり方
+- .vscode/api-manual-test.http を開く
+- Send Request ボタンを押す
+
 ## アーキテクチャなどの構想
 - 軽量DDDを採用
 - オニオンアーキテクチャを採用
