@@ -11,6 +11,7 @@ func SetupAPIEndpoints(router *gin.Engine, diaryController *controllers.DiaryCon
 	api := router.Group("/api")
 	{
 		api.GET("/me/diaries", diaryController.FindAll)
+		api.GET("/me/diaries/range", diaryController.FindByUserIDAndDateRange)
 		api.GET("/me/diaries/:date", diaryController.FindByUserIDAndDate)
 		api.POST("/me/diaries", diaryController.Create)
 		api.PUT("/me/diaries/:date", diaryController.Update)

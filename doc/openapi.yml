@@ -69,6 +69,50 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /me/diaries/range:
+    get:
+      summary: 期間指定日記取得
+      description: 現在のユーザーの指定された期間の日記を取得します
+      parameters:
+        - name: start_date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: 開始日（YYYY-MM-DD形式）
+        - name: end_date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: 終了日（YYYY-MM-DD形式）
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Diary'
+        '400':
+          description: リクエストが不正（パラメータ不足）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /me/diaries/{date}:
     get:
       summary: 日記取得

@@ -13,6 +13,7 @@ type IDiaryRepository interface {
 	FindAll() (*[]diary.Diary, error)
 	FindByUserID(userID int) (*[]diary.Diary, error)
 	FindByUserIDAndDate(userID int, date string) (*diary.Diary, error)
+	FindByUserIDAndDateRange(userID int, startDate, endDate string) (*[]diary.Diary, error)
 	Create(diary *diary.Diary) error
 	Update(userID int, date string, diary *diary.Diary) error
 	Delete(userID int, date string) error
@@ -62,6 +63,19 @@ func (r *DiaryRepository) FindByUserIDAndDate(userID int, date string) (*diary.D
 		return nil, err
 	}
 	return diaryModel.ToDomain(), nil
+}
+
+func (r *DiaryRepository) FindByUserIDAndDateRange(userID int, startDate, endDate string) (*[]diary.Diary, error) {
+	var diaryModels []db.DiaryModel
+	if err := r.db.Where("user_id = ? AND date BETWEEN ? AND ?", userID, startDate, endDate).Find(&diaryModels).Error; err != nil {
+		return nil, err
+	}
+
+	diaries := make([]diary.Diary, 0)
+	for _, model := range diaryModels {
+		diaries = append(diaries, *model.ToDomain())
+	}
+	return &diaries, nil
 }
 
 func (r *DiaryRepository) Create(diary *diary.Diary) error {

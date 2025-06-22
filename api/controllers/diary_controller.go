@@ -52,6 +52,32 @@ func (c *DiaryController) FindByUserIDAndDate(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": ToResponseDTO(diary)})
 }
 
+func (c *DiaryController) FindByUserIDAndDateRange(ctx *gin.Context) {
+	// ハードコードでuser_id=1を使用
+	userID := 1
+	startDate := ctx.Query("start_date")
+	endDate := ctx.Query("end_date")
+
+	// クエリパラメータのバリデーション
+	if startDate == "" || endDate == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "start_dateとend_dateの両方が必要です"})
+		return
+	}
+
+	diaries, err := c.usecase.FindByUserIDAndDateRange(userID, startDate, endDate)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	responseDTOs := make([]DiaryResponseDTO, 0, len(*diaries))
+	for _, d := range *diaries {
+		responseDTOs = append(responseDTOs, ToResponseDTO(&d))
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": responseDTOs})
+}
+
 type CreateDiaryDTO struct {
 	Date   string `json:"date"`
 	Mental int    `json:"mental"`

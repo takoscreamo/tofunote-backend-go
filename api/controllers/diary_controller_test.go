@@ -32,6 +32,10 @@ func (m *mockDiaryUsecase) FindByUserIDAndDate(userID int, date string) (*diary.
 	return m.diary, m.err
 }
 
+func (m *mockDiaryUsecase) FindByUserIDAndDateRange(userID int, startDate, endDate string) (*[]diary.Diary, error) {
+	return m.diaries, m.err
+}
+
 func (m *mockDiaryUsecase) Create(diary *diary.Diary) error {
 	return m.err
 }
@@ -526,6 +530,123 @@ func TestDiaryController_FindByUserIDAndDate(t *testing.T) {
 				var actual DiaryResponseDTO
 				_ = json.Unmarshal(dataBytes, &actual)
 				assert.Equal(t, *tt.expectedData, actual)
+			}
+		})
+	}
+}
+
+func TestDiaryController_FindByUserIDAndDateRange(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	tests := []struct {
+		name           string
+		setupMock      func() *mockDiaryUsecase
+		startDate      string
+		endDate        string
+		expectedStatus int
+		expectedData   []DiaryResponseDTO
+		expectedError  string
+	}{
+		{
+			name: "正常系：指定された期間の日記を取得できる",
+			setupMock: func() *mockDiaryUsecase {
+				diaries := make([]diary.Diary, len(testDiaries))
+				copy(diaries, testDiaries)
+				return &mockDiaryUsecase{
+					diaries: &diaries,
+					err:     nil,
+				}
+			},
+			startDate:      "2025-01-01",
+			endDate:        "2025-01-31",
+			expectedStatus: http.StatusOK,
+			expectedData: []DiaryResponseDTO{
+				{ID: 1, UserID: 1, Date: "2025-01-01", Mental: 5, Diary: "良い日だった"},
+				{ID: 2, UserID: 1, Date: "2025-01-02", Mental: 3, Diary: "普通の日だった"},
+			},
+			expectedError: "",
+		},
+		{
+			name: "異常系：start_dateパラメータが不足",
+			setupMock: func() *mockDiaryUsecase {
+				return &mockDiaryUsecase{
+					diaries: nil,
+					err:     nil,
+				}
+			},
+			startDate:      "",
+			endDate:        "2025-01-31",
+			expectedStatus: http.StatusBadRequest,
+			expectedData:   nil,
+			expectedError:  "start_dateとend_dateの両方が必要です",
+		},
+		{
+			name: "異常系：end_dateパラメータが不足",
+			setupMock: func() *mockDiaryUsecase {
+				return &mockDiaryUsecase{
+					diaries: nil,
+					err:     nil,
+				}
+			},
+			startDate:      "2025-01-01",
+			endDate:        "",
+			expectedStatus: http.StatusBadRequest,
+			expectedData:   nil,
+			expectedError:  "start_dateとend_dateの両方が必要です",
+		},
+		{
+			name: "異常系：サービスがエラーを返した場合は500を返す",
+			setupMock: func() *mockDiaryUsecase {
+				return &mockDiaryUsecase{
+					diaries: nil,
+					err:     errors.New("DBエラー"),
+				}
+			},
+			startDate:      "2025-01-01",
+			endDate:        "2025-01-31",
+			expectedStatus: http.StatusInternalServerError,
+			expectedData:   nil,
+			expectedError:  "DBエラー",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := tt.setupMock()
+			controller := NewDiaryController(mock)
+
+			router := gin.New()
+			router.GET("/api/me/diaries/range", controller.FindByUserIDAndDateRange)
+
+			url := "/api/me/diaries/range"
+			if tt.startDate != "" {
+				url += "?start_date=" + tt.startDate
+			}
+			if tt.endDate != "" {
+				if tt.startDate != "" {
+					url += "&end_date=" + tt.endDate
+				} else {
+					url += "?end_date=" + tt.endDate
+				}
+			}
+
+			req, _ := http.NewRequest("GET", url, nil)
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			assert.Equal(t, tt.expectedStatus, w.Code)
+
+			var response responseBody
+			err := json.Unmarshal(w.Body.Bytes(), &response)
+			assert.NoError(t, err)
+
+			if tt.expectedError != "" {
+				assert.Equal(t, tt.expectedError, response.Error)
+			} else {
+				dataBytes, _ := json.Marshal(response.Data)
+				var actual []DiaryResponseDTO
+				_ = json.Unmarshal(dataBytes, &actual)
+				assert.Equal(t, tt.expectedData, actual)
 			}
 		})
 	}
