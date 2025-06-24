@@ -2,3 +2,4 @@
 .env
 /docker
 !.vscode/api-manual-test.http
+infra/diary_datas/*
