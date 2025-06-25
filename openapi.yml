@@ -5,8 +5,10 @@ info:
   version: 1.0.0
 
 servers:
+  - url: https://api.emotra.takoscreamo.com/api
+    description: 本番環境
   - url: http://localhost:8080/api
-    description: 開発環境
+    description: ローカル環境
 
 paths:
   /me/diaries:
