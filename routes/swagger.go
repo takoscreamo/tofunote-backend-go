@@ -1,6 +1,9 @@
 package routes
 
 import (
+	"os"
+	"path/filepath"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -8,7 +11,22 @@ import (
 func SetupSwaggerEndpoints(router *gin.Engine) {
 	// OpenAPI仕様書を提供するエンドポイント
 	router.GET("/openapi.yml", func(c *gin.Context) {
-		c.File("openapi.yml")
+		// Lambda環境では実行ディレクトリが /var/task になるため、
+		// 相対パスでファイルを探す
+		openapiPath := "openapi.yml"
+
+		// ファイルが存在するかチェック
+		if _, err := os.Stat(openapiPath); os.IsNotExist(err) {
+			// ファイルが存在しない場合は、実行ファイルと同じディレクトリを探す
+			execPath, err := os.Executable()
+			if err == nil {
+				execDir := filepath.Dir(execPath)
+				openapiPath = filepath.Join(execDir, "openapi.yml")
+			}
+		}
+
+		// ファイルを提供
+		c.File(openapiPath)
 	})
 
 	// SwaggerUIを提供するエンドポイント
