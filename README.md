@@ -92,7 +92,7 @@ migrate -path ./infra/migrations -database "postgres://ginuser:ginpassword@local
 ## テスト
 ```bash
 # 全テスト実行
-go test ./...
+go test $(go list ./... | grep -v '/scripts')
 ```
 
 ## API ドキュメント
