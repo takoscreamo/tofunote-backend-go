@@ -13,11 +13,15 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 var ginLambda *ginadapter.GinLambda
 
 func init() {
+	// .envファイルがなくてもエラーを無視
+	_ = godotenv.Load()
+
 	// データベース初期化
 	infra.Initialize()
 	db := infra.SetupDB()
