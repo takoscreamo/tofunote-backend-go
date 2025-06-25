@@ -28,7 +28,7 @@ func SetupDB() *gorm.DB {
 	dbPort := getEnvOrDefault("DB_PORT", "5432")
 
 	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Tokyo",
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=require TimeZone=Asia/Tokyo preferIPv4=true connect_timeout=10",
 		dbHost,
 		dbUser,
 		dbPassword,
