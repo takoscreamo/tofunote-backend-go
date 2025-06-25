@@ -11,15 +11,28 @@ import (
 	"gorm.io/gorm"
 )
 
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
 func SetupDB() *gorm.DB {
-	env := os.Getenv("ENV")
+	env := getEnvOrDefault("ENV", "dev")
+	dbHost := getEnvOrDefault("DB_HOST", "localhost")
+	dbUser := getEnvOrDefault("DB_USER", "ginuser")
+	dbPassword := getEnvOrDefault("DB_PASSWORD", "ginpassword")
+	dbName := getEnvOrDefault("DB_NAME", "emotra")
+	dbPort := getEnvOrDefault("DB_PORT", "5432")
+
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Tokyo",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
-		os.Getenv("DB_PORT"),
+		dbHost,
+		dbUser,
+		dbPassword,
+		dbName,
+		dbPort,
 	)
 
 	var (

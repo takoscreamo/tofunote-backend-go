@@ -1,5 +1,58 @@
+# 一時ファイル
 /tmp
+
+# 環境変数ファイル
 .env
+
+# Docker関連
 /docker
+
+# VSCode設定（APIテストファイルは除外）
 !.vscode/api-manual-test.http
+
+# データファイル
 infra/diary_datas/*
+
+# AWS Lambda関連
+bootstrap
+function.zip
+.aws-sam/
+
+# Go関連
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+
+# バイナリファイル
+emotra-backend
+
+# ログファイル
+*.log
+
+# OS関連
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE関連
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 依存関係
+vendor/
+
+# テストカバレッジ
+coverage.txt
+coverage.html
