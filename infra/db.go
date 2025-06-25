@@ -19,6 +19,7 @@ func getEnvOrDefault(key, defaultValue string) string {
 }
 
 func SetupDB() *gorm.DB {
+	log.Println("[DEBUG] SetupDB: 開始")
 	env := getEnvOrDefault("ENV", "dev")
 	dbHost := getEnvOrDefault("DB_HOST", "localhost")
 	dbUser := getEnvOrDefault("DB_USER", "ginuser")
@@ -35,27 +36,37 @@ func SetupDB() *gorm.DB {
 		dbPort,
 	)
 
+	log.Printf("[DEBUG] SetupDB: ENV=%s, DB_HOST=%s, DB_USER=%s, DB_NAME=%s, DB_PORT=%s", env, dbHost, dbUser, dbName, dbPort)
+	log.Printf("[DEBUG] SetupDB: DSN=%s", dsn)
+
 	var (
 		database *gorm.DB
 		err      error
 	)
 
 	if env == "prod" {
+		log.Println("[DEBUG] SetupDB: PostgreSQLに接続します")
 		database, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-		log.Println("Setup postgresql database")
+		log.Println("[DEBUG] SetupDB: PostgreSQL接続完了")
 	} else {
+		log.Println("[DEBUG] SetupDB: SQLiteに接続します")
 		database, err = gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-		log.Println("Setup sqlite database")
+		log.Println("[DEBUG] SetupDB: SQLite接続完了")
 	}
 	if err != nil {
+		log.Printf("[ERROR] SetupDB: DB接続失敗: %v", err)
 		panic("Failed to connect database")
 	}
 
+	log.Println("[DEBUG] SetupDB: AutoMigrate開始")
 	// AutoMigrateでテーブルを作成
 	err = database.AutoMigrate(&db.DiaryModel{})
 	if err != nil {
+		log.Printf("[ERROR] SetupDB: マイグレーション失敗: %v", err)
 		panic("Failed to migrate database")
 	}
+	log.Println("[DEBUG] SetupDB: AutoMigrate完了")
 
+	log.Println("[DEBUG] SetupDB: 正常終了")
 	return database
 }
