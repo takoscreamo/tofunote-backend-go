@@ -143,6 +143,9 @@ func initializeApp() {
 func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Printf("[DEBUG] Lambda Handler: Received request: %s %s", req.HTTPMethod, req.Path)
 
+	// 遅延初期化を実行
+	initializeApp()
+
 	// 初期化が完了していない場合はエラーレスポンスを返す
 	if !isInitialized {
 		log.Printf("[ERROR] Lambda Handler: Initialization not completed yet")
