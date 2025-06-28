@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func getEnvOrDefault(key, defaultValue string) string {
@@ -28,7 +30,7 @@ func SetupDB() *gorm.DB {
 	dbPort := getEnvOrDefault("DB_PORT", "5432")
 
 	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=require TimeZone=Asia/Tokyo preferIPv4=true connect_timeout=10",
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=require TimeZone=Asia/Tokyo preferIPv4=true connect_timeout=10 statement_timeout=30000 idle_in_transaction_session_timeout=30000",
 		dbHost,
 		dbUser,
 		dbPassword,
@@ -46,7 +48,26 @@ func SetupDB() *gorm.DB {
 
 	if env == "prod" {
 		log.Println("[DEBUG] SetupDB: PostgreSQLに接続します")
-		database, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+		database, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
+			Logger: logger.Default.LogMode(logger.Info),
+		})
+		if err != nil {
+			log.Printf("[ERROR] SetupDB: DB接続失敗: %v", err)
+			panic("Failed to connect database")
+		}
+
+		// 接続プールの設定
+		sqlDB, err := database.DB()
+		if err != nil {
+			log.Printf("[ERROR] SetupDB: DB取得失敗: %v", err)
+			panic("Failed to get database")
+		}
+
+		// 接続プール設定
+		sqlDB.SetMaxIdleConns(5)
+		sqlDB.SetMaxOpenConns(20)
+		sqlDB.SetConnMaxLifetime(time.Hour)
+
 		log.Println("[DEBUG] SetupDB: PostgreSQL接続完了")
 	} else {
 		log.Println("[DEBUG] SetupDB: SQLiteに接続します")

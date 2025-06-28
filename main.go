@@ -32,6 +32,13 @@ func initializeApp() {
 	initOnce.Do(func() {
 		log.Println("[DEBUG] Lambda initializeApp: 開始")
 
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("[ERROR] Lambda initializeApp: Panic occurred: %v", r)
+				isInitialized = false
+			}
+		}()
+
 		log.Println("[DEBUG] Lambda initializeApp: infra.Initialize() 開始")
 		infra.Initialize()
 		log.Println("[DEBUG] Lambda initializeApp: infra.Initialize() 完了")
