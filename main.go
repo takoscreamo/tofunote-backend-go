@@ -43,6 +43,17 @@ func init() {
 
 	log.Println("[DEBUG] Lambda init: gin.Default() 開始")
 	router := gin.Default()
+
+	// カスタムログミドルウェアを追加
+	router.Use(func(c *gin.Context) {
+		log.Printf("[DEBUG] Gin: %s %s", c.Request.Method, c.Request.URL.Path)
+		c.Next()
+		log.Printf("[DEBUG] Gin: Response Status: %d", c.Writer.Status())
+		if c.Writer.Status() >= 400 {
+			log.Printf("[DEBUG] Gin: Error occurred for %s %s", c.Request.Method, c.Request.URL.Path)
+		}
+	})
+
 	log.Println("[DEBUG] Lambda init: gin.Default() 完了")
 
 	log.Println("[DEBUG] Lambda init: routes.SetupCORS 開始")
@@ -56,6 +67,12 @@ func init() {
 	log.Println("[DEBUG] Lambda init: routes.SetupAPIEndpoints 開始")
 	routes.SetupAPIEndpoints(router, diaryController, diaryAnalysisController)
 	log.Println("[DEBUG] Lambda init: routes.SetupAPIEndpoints 完了")
+
+	// ヘルスチェックとデバッグ情報を提供するエンドポイント
+	router.GET("/health", func(c *gin.Context) {
+		log.Printf("[DEBUG] Health check endpoint called")
+		c.JSON(200, gin.H{"status": "healthy"})
+	})
 
 	log.Println("[DEBUG] Lambda init: ginadapter.New(router) 開始")
 	ginLambda = ginadapter.New(router)
