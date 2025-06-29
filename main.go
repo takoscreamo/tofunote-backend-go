@@ -115,12 +115,6 @@ func initializeApp() {
 			routes.SetupAPIEndpoints(router, diaryController, diaryAnalysisController)
 			log.Println("[DEBUG] Lambda initializeApp: routes.SetupAPIEndpoints 完了")
 
-			// ヘルスチェックとデバッグ情報を提供するエンドポイント
-			router.GET("/health", func(c *gin.Context) {
-				log.Printf("[DEBUG] Health check endpoint called")
-				c.JSON(200, gin.H{"status": "healthy"})
-			})
-
 			log.Println("[DEBUG] Lambda initializeApp: ginadapter.New(router) 開始")
 			ginLambda = ginadapter.New(router)
 			log.Println("[DEBUG] Lambda initializeApp: ginadapter.New(router) 完了")

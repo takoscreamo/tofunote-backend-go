@@ -8,6 +8,11 @@ import (
 
 // SetupAPIEndpoints APIエンドポイントを設定
 func SetupAPIEndpoints(router *gin.Engine, diaryController *controllers.DiaryController, diaryAnalysisController *controllers.DiaryAnalysisController) {
+	// ヘルスチェックエンドポイント
+	router.GET("/ping", func(c *gin.Context) {
+		c.JSON(200, gin.H{"message": "pong"})
+	})
+
 	api := router.Group("/api")
 	{
 		api.GET("/me/diaries", diaryController.FindAll)

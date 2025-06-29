@@ -24,11 +24,6 @@ func main() {
 
 	router := gin.Default()
 
-	// ヘルスチェックエンドポイントを追加
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "healthy"})
-	})
-
 	// CORS設定を追加
 	routes.SetupCORS(router)
 
