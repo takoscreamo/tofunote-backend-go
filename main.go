@@ -42,16 +42,35 @@ func initializeApp() {
 				done <- true
 			}()
 
+			log.Println("[DEBUG] Lambda initializeApp: infra.Initialize() 開始")
 			infra.Initialize()
+			log.Println("[DEBUG] Lambda initializeApp: infra.Initialize() 完了")
+
+			log.Println("[DEBUG] Lambda initializeApp: infra.SetupDB() 開始")
 			db := infra.SetupDB()
+			log.Println("[DEBUG] Lambda initializeApp: infra.SetupDB() 完了")
 
+			log.Println("[DEBUG] Lambda initializeApp: repositories.NewDiaryRepository 開始")
 			diaryRepository := repositories.NewDiaryRepository(db)
+			log.Println("[DEBUG] Lambda initializeApp: repositories.NewDiaryRepository 完了")
+
+			log.Println("[DEBUG] Lambda initializeApp: usecases.NewDiaryUsecase 開始")
 			diaryUsecase := usecases.NewDiaryUsecase(diaryRepository)
+			log.Println("[DEBUG] Lambda initializeApp: usecases.NewDiaryUsecase 完了")
+
+			log.Println("[DEBUG] Lambda initializeApp: controllers.NewDiaryController 開始")
 			diaryController := controllers.NewDiaryController(diaryUsecase)
+			log.Println("[DEBUG] Lambda initializeApp: controllers.NewDiaryController 完了")
 
+			log.Println("[DEBUG] Lambda initializeApp: usecases.NewDiaryAnalysisUsecase 開始")
 			diaryAnalysisUsecase := usecases.NewDiaryAnalysisUsecase(diaryRepository)
-			diaryAnalysisController := controllers.NewDiaryAnalysisController(diaryAnalysisUsecase)
+			log.Println("[DEBUG] Lambda initializeApp: usecases.NewDiaryAnalysisUsecase 完了")
 
+			log.Println("[DEBUG] Lambda initializeApp: controllers.NewDiaryAnalysisController 開始")
+			diaryAnalysisController := controllers.NewDiaryAnalysisController(diaryAnalysisUsecase)
+			log.Println("[DEBUG] Lambda initializeApp: controllers.NewDiaryAnalysisController 完了")
+
+			log.Println("[DEBUG] Lambda initializeApp: gin.Default() 開始")
 			router := gin.Default()
 
 			// カスタムログミドルウェアを追加
@@ -64,16 +83,28 @@ func initializeApp() {
 				}
 			})
 
+			log.Println("[DEBUG] Lambda initializeApp: routes.SetupCORS 開始")
 			routes.SetupCORS(router)
+			log.Println("[DEBUG] Lambda initializeApp: routes.SetupCORS 完了")
+
+			log.Println("[DEBUG] Lambda initializeApp: routes.SetupSwaggerEndpoints 開始")
 			routes.SetupSwaggerEndpoints(router)
+			log.Println("[DEBUG] Lambda initializeApp: routes.SetupSwaggerEndpoints 完了")
+
+			log.Println("[DEBUG] Lambda initializeApp: routes.SetupAPIEndpoints 開始")
 			routes.SetupAPIEndpoints(router, diaryController, diaryAnalysisController)
+			log.Println("[DEBUG] Lambda initializeApp: routes.SetupAPIEndpoints 完了")
 
 			// ヘルスチェックエンドポイント
 			router.GET("/health", func(c *gin.Context) {
+				log.Printf("[DEBUG] Health check endpoint called")
 				c.JSON(200, gin.H{"status": "healthy"})
 			})
 
+			log.Println("[DEBUG] Lambda initializeApp: ginadapter.New(router) 開始")
 			ginLambda = ginadapter.New(router)
+			log.Println("[DEBUG] Lambda initializeApp: ginadapter.New(router) 完了")
+
 			isInitialized = true
 			log.Println("[DEBUG] Lambda initializeApp: 完了")
 		}()
