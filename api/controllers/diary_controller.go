@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"emotra-backend/domain/diary"
-	"emotra-backend/usecases"
+	"feelog-backend/domain/diary"
+	"feelog-backend/usecases"
 	"net/http"
 	"strings"
 

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"emotra-backend/infra"
-	"emotra-backend/repositories"
+	"feelog-backend/infra"
+	"feelog-backend/repositories"
 	"fmt"
 	"log"
 )

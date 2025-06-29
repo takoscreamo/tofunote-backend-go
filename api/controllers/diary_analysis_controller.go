@@ -3,7 +3,7 @@ package controllers
 import (
 	"net/http"
 
-	"emotra-backend/usecases"
+	"feelog-backend/usecases"
 
 	"github.com/gin-gonic/gin"
 )

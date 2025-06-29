@@ -35,7 +35,7 @@ info:
   version: 1.0.0
 
 servers:
-  - url: https://api.emotra.takoscreamo.com/api
+  - url: https://api.feelog.takoscreamo.com/api
     description: 本番環境
   - url: http://localhost:8080/api
     description: ローカル環境

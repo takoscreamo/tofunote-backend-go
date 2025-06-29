@@ -1,9 +1,9 @@
 package repositories
 
 import (
-	"emotra-backend/domain/diary"
-	"emotra-backend/infra/db"
 	"errors"
+	"feelog-backend/domain/diary"
+	"feelog-backend/infra/db"
 	"strings"
 
 	"gorm.io/gorm"

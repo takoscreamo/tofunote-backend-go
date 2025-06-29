@@ -1,12 +1,12 @@
 package main
 
 import (
-	"emotra-backend/infra"
-	"emotra-backend/routes"
+	"feelog-backend/infra"
+	"feelog-backend/routes"
 
-	"emotra-backend/api/controllers"
-	"emotra-backend/repositories"
-	"emotra-backend/usecases"
+	"feelog-backend/api/controllers"
+	"feelog-backend/repositories"
+	"feelog-backend/usecases"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,6 +23,11 @@ func main() {
 	diaryAnalysisController := controllers.NewDiaryAnalysisController(diaryAnalysisUsecase)
 
 	router := gin.Default()
+
+	// ヘルスチェックエンドポイントを追加
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "healthy"})
+	})
 
 	// CORS設定を追加
 	routes.SetupCORS(router)

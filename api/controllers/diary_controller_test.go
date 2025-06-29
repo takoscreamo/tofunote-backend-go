@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"bytes"
-	"emotra-backend/domain/diary"
 	"encoding/json"
 	"errors"
+	"feelog-backend/domain/diary"
 	"net/http"
 	"net/http/httptest"
 	"testing"

@@ -1,4 +1,4 @@
-# EmoTra Backend
+# Feelog Backend
 - メンタルヘルスのための感情トラッキングアプリケーション
 - 日記のように感情を記録し、振り返ることができる
 - GoとGinによるバックエンドAPI
@@ -26,7 +26,7 @@
    ```bash
    # リポジトリをクローン
    git clone <repository-url>
-   cd emotra-backend-go
+   cd feelog-backend-go
    
    # 環境変数ファイルを作成
    cp .env.example .env
@@ -67,7 +67,7 @@ export DB_HOST="your-database-host"
 export DB_PORT="5432"
 export DB_USER="your-database-user"
 export DB_PASSWORD="your-database-password"
-export DB_NAME="emotra"
+export DB_NAME="feelog"
 
 # デプロイ実行
 ./deploy.sh
@@ -83,10 +83,10 @@ export DB_NAME="emotra"
 ### マイグレーション
 ```bash
 # マイグレーション実行（db接続情報は要変更）
-migrate -path ./infra/migrations -database "postgres://ginuser:ginpassword@localhost:5432/emotra?sslmode=disable" up
+migrate -path ./infra/migrations -database "postgres://ginuser:ginpassword@localhost:5432/feelog?sslmode=disable" up
 
 # ロールバック
-migrate -path ./infra/migrations -database "postgres://ginuser:ginpassword@localhost:5432/emotra?sslmode=disable" down
+migrate -path ./infra/migrations -database "postgres://ginuser:ginpassword@localhost:5432/feelog?sslmode=disable" down
 ```
 
 ## テスト
@@ -133,9 +133,9 @@ go test $(go list ./... | grep -v '/scripts')
 
 ### GoとGinの初期構築
 ```bash
-make emotra-backend
-cd emotra-backend
-go mod init emotra-backend
+make feelog-backend
+cd feelog-backend
+go mod init feelog-backend
 go get -u github.com/gin-gonic/gin
 # main.goを作成
 go run main.go
@@ -153,7 +153,7 @@ kill -9 $(lsof -t -i:8080)
 ## ファイル構成
 
 ```
-emotra-backend-go/
+feelog-backend-go/
 ├── api/controllers/          # コントローラー層
 ├── domain/                   # ドメイン層
 ├── infra/                    # インフラ層

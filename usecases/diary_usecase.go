@@ -1,8 +1,8 @@
 package usecases
 
 import (
-	"emotra-backend/domain/diary"
-	"emotra-backend/repositories"
+	"feelog-backend/domain/diary"
+	"feelog-backend/repositories"
 )
 
 type IDiaryUsecase interface {

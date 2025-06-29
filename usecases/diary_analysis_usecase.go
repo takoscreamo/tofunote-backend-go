@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"emotra-backend/repositories"
+	"feelog-backend/repositories"
 )
 
 type DiaryAnalysisUsecase struct {

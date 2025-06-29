@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"emotra-backend/api/controllers"
+	"feelog-backend/api/controllers"
 
 	"github.com/gin-gonic/gin"
 )

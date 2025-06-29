@@ -1,8 +1,8 @@
 package usecases
 
 import (
-	"emotra-backend/domain/diary"
 	"errors"
+	"feelog-backend/domain/diary"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"

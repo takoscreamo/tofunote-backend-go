@@ -1,7 +1,7 @@
 package db
 
 import (
-	"emotra-backend/domain/diary"
+	"feelog-backend/domain/diary"
 
 	"gorm.io/gorm"
 )

@@ -2,9 +2,9 @@ package main
 
 import (
 	"bufio"
-	"emotra-backend/domain/diary"
-	"emotra-backend/infra"
-	"emotra-backend/repositories"
+	"feelog-backend/domain/diary"
+	"feelog-backend/infra"
+	"feelog-backend/repositories"
 	"fmt"
 	"log"
 	"os"

@@ -1,8 +1,8 @@
 package repositories
 
 import (
-	"emotra-backend/domain/diary"
 	"errors"
+	"feelog-backend/domain/diary"
 	"testing"
 	"time"
 

@@ -12,7 +12,7 @@ services:
       POSTGRES_USER: ginuser
       POSTGRES_PASSWORD: ginpassword
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
-      POSTGRES_DB: emotra
+      POSTGRES_DB: feelog
     hostname: postgres
     restart: always
     user: root

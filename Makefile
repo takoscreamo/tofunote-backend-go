@@ -1,4 +1,4 @@
-.PHONY: migrate-diary check-data convert-to-json migrate-from-json migrate-from-json-prod check-data-prod run build test
+.PHONY: migrate-diary check-data convert-to-json migrate-from-json migrate-from-json-prod check-data-prod run build test dev
 
 # 環境変数ファイルを読み込み（存在する場合）
 ifneq (,$(wildcard .env))
@@ -10,7 +10,7 @@ endif
 DB_HOST ?= localhost
 DB_USER ?= ginuser
 DB_PASSWORD ?= ginpassword
-DB_NAME ?= emotra
+DB_NAME ?= feelog
 DB_PORT ?= 5432
 
 # 日記データ移行（テキストから直接）
@@ -53,7 +53,7 @@ run:
 
 # ビルド
 build:
-	go build -o bin/emotra-backend main.go
+	go build -o bin/feelog-backend main.go
 
 # テスト実行
 test:
@@ -69,4 +69,8 @@ fmt:
 
 # リント
 lint:
-	golangci-lint run 
+	golangci-lint run
+
+# ローカル開発サーバー起動
+dev:
+	ENV=dev go run cmd/local/main.go 

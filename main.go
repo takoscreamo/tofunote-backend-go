@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
-	"emotra-backend/api/controllers"
-	"emotra-backend/infra"
-	"emotra-backend/repositories"
-	"emotra-backend/routes"
-	"emotra-backend/usecases"
+	"feelog-backend/api/controllers"
+	"feelog-backend/infra"
+	"feelog-backend/repositories"
+	"feelog-backend/routes"
+	"feelog-backend/usecases"
 	"log"
 	"sync"
 	"time"

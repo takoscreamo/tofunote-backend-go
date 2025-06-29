@@ -1,10 +1,10 @@
 package main
 
 import (
-	"emotra-backend/domain/diary"
-	"emotra-backend/infra"
-	"emotra-backend/repositories"
 	"encoding/json"
+	"feelog-backend/domain/diary"
+	"feelog-backend/infra"
+	"feelog-backend/repositories"
 	"fmt"
 	"log"
 	"os"

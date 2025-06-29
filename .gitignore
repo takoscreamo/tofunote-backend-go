@@ -29,7 +29,7 @@ function.zip
 go.work
 
 # バイナリファイル
-emotra-backend
+feelog-backend
 
 # ログファイル
 *.log
