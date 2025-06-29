@@ -60,14 +60,15 @@ func SetupDB() *gorm.DB {
 	})
 	if err != nil {
 		log.Printf("[ERROR] SetupDB: DB接続失敗: %v", err)
-		panic("Failed to connect database")
+		log.Printf("[ERROR] SetupDB: 接続詳細 - Host: %s, Port: %s, Database: %s, User: %s", dbHost, dbPort, dbName, dbUser)
+		panic(fmt.Sprintf("Failed to connect database: %v", err))
 	}
 
 	// 接続プールの設定
 	sqlDB, err := database.DB()
 	if err != nil {
 		log.Printf("[ERROR] SetupDB: DB取得失敗: %v", err)
-		panic("Failed to get database")
+		panic(fmt.Sprintf("Failed to get database: %v", err))
 	}
 
 	// 接続プール設定
@@ -82,7 +83,7 @@ func SetupDB() *gorm.DB {
 	err = database.AutoMigrate(&db.DiaryModel{})
 	if err != nil {
 		log.Printf("[ERROR] SetupDB: マイグレーション失敗: %v", err)
-		panic("Failed to migrate database")
+		panic(fmt.Sprintf("Failed to migrate database: %v", err))
 	}
 	log.Println("[DEBUG] SetupDB: AutoMigrate完了")
 

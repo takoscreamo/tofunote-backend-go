@@ -8,6 +8,7 @@ import (
 	"feelog-backend/routes"
 	"feelog-backend/usecases"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -128,11 +129,11 @@ func initializeApp() {
 			log.Println("[DEBUG] Lambda initializeApp: 完了")
 		}()
 
-		// 30秒でタイムアウト
+		// 60秒でタイムアウト（本番環境では長めに設定）
 		select {
 		case <-done:
 			log.Println("[DEBUG] Lambda initializeApp: 正常完了")
-		case <-time.After(30 * time.Second):
+		case <-time.After(60 * time.Second):
 			log.Printf("[ERROR] Lambda initializeApp: タイムアウト")
 			isInitialized = false
 		}
@@ -142,6 +143,14 @@ func initializeApp() {
 // Handler AWS Lambdaのハンドラー関数
 func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Printf("[DEBUG] Lambda Handler: Received request: %s %s", req.HTTPMethod, req.Path)
+
+	// 環境変数の確認（パスワードは隠す）
+	log.Printf("[DEBUG] Lambda Handler: ENV=%s, DB_HOST=%s, DB_USER=%s, DB_NAME=%s, DB_PORT=%s",
+		os.Getenv("ENV"),
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_USER"),
+		os.Getenv("DB_NAME"),
+		os.Getenv("DB_PORT"))
 
 	// 遅延初期化を実行
 	initializeApp()
@@ -154,12 +163,25 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 			Headers: map[string]string{
 				"Content-Type": "application/json",
 			},
-			Body: `{"error": "Service is initializing, please try again"}`,
+			Body: `{"error": "Service is initializing, please try again", "path": "` + req.Path + `"}`,
 		}, nil
 	}
 
 	// Ginアダプターを使用してリクエストを処理
-	return ginLambda.ProxyWithContext(ctx, req)
+	response, err := ginLambda.ProxyWithContext(ctx, req)
+	if err != nil {
+		log.Printf("[ERROR] Lambda Handler: Proxy error for %s %s: %v", req.HTTPMethod, req.Path, err)
+		return events.APIGatewayProxyResponse{
+			StatusCode: 500,
+			Headers: map[string]string{
+				"Content-Type": "application/json",
+			},
+			Body: `{"error": "Internal server error", "path": "` + req.Path + `", "details": "` + err.Error() + `"}`,
+		}, nil
+	}
+
+	log.Printf("[DEBUG] Lambda Handler: Response status: %d for %s %s", response.StatusCode, req.HTTPMethod, req.Path)
+	return response, nil
 }
 
 func main() {
