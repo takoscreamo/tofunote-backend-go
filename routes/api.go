@@ -2,6 +2,7 @@ package routes
 
 import (
 	"feelog-backend/api/controllers"
+	"log"
 
 	"github.com/gin-gonic/gin"
 )
@@ -10,6 +11,7 @@ import (
 func SetupAPIEndpoints(router *gin.Engine, diaryController *controllers.DiaryController, diaryAnalysisController *controllers.DiaryAnalysisController) {
 	// ヘルスチェックエンドポイント
 	router.GET("/ping", func(c *gin.Context) {
+		log.Printf("[DEBUG] Ping endpoint called - returning pong message")
 		c.JSON(200, gin.H{"message": "pong"})
 	})
 

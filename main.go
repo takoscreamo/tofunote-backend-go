@@ -138,6 +138,11 @@ func initializeApp() {
 func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Printf("[DEBUG] Lambda Handler: Received request: %s %s", req.HTTPMethod, req.Path)
 
+	// pingエンドポイントの特別なデバッグログ
+	if req.Path == "/ping" {
+		log.Printf("[DEBUG] Lambda Handler: Ping endpoint detected - Path: %s, Method: %s", req.Path, req.HTTPMethod)
+	}
+
 	// 環境変数の確認（パスワードは隠す）
 	log.Printf("[DEBUG] Lambda Handler: ENV=%s, DB_HOST=%s, DB_USER=%s, DB_NAME=%s, DB_PORT=%s",
 		os.Getenv("ENV"),
@@ -172,6 +177,11 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 			},
 			Body: `{"error": "Internal server error", "path": "` + req.Path + `", "details": "` + err.Error() + `"}`,
 		}, nil
+	}
+
+	// pingエンドポイントのレスポンスデバッグログ
+	if req.Path == "/ping" {
+		log.Printf("[DEBUG] Lambda Handler: Ping response - Status: %d, Body: %s", response.StatusCode, response.Body)
 	}
 
 	log.Printf("[DEBUG] Lambda Handler: Response status: %d for %s %s", response.StatusCode, req.HTTPMethod, req.Path)
