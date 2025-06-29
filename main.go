@@ -143,6 +143,15 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 		log.Printf("[DEBUG] Lambda Handler: Ping endpoint detected - Path: %s, Method: %s", req.Path, req.HTTPMethod)
 	}
 
+	// 新しい動作確認エンドポイントのデバッグログ
+	if req.Path == "/health" {
+		log.Printf("[DEBUG] Lambda Handler: Health endpoint detected - Path: %s, Method: %s", req.Path, req.HTTPMethod)
+	}
+
+	if req.Path == "/status" {
+		log.Printf("[DEBUG] Lambda Handler: Status endpoint detected - Path: %s, Method: %s", req.Path, req.HTTPMethod)
+	}
+
 	// 環境変数の確認（パスワードは隠す）
 	log.Printf("[DEBUG] Lambda Handler: ENV=%s, DB_HOST=%s, DB_USER=%s, DB_NAME=%s, DB_PORT=%s",
 		os.Getenv("ENV"),
@@ -182,6 +191,15 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 	// pingエンドポイントのレスポンスデバッグログ
 	if req.Path == "/ping" {
 		log.Printf("[DEBUG] Lambda Handler: Ping response - Status: %d, Body: %s", response.StatusCode, response.Body)
+	}
+
+	// 新しいエンドポイントのレスポンスデバッグログ
+	if req.Path == "/health" {
+		log.Printf("[DEBUG] Lambda Handler: Health response - Status: %d, Body: %s", response.StatusCode, response.Body)
+	}
+
+	if req.Path == "/status" {
+		log.Printf("[DEBUG] Lambda Handler: Status response - Status: %d, Body: %s", response.StatusCode, response.Body)
 	}
 
 	log.Printf("[DEBUG] Lambda Handler: Response status: %d for %s %s", response.StatusCode, req.HTTPMethod, req.Path)
