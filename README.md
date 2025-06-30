@@ -35,12 +35,59 @@
    docker compose up -d --build
    
    # ローカルサーバーを起動
-   go run main_local.go
+   make dev
    ```
 
 3. **動作確認**
    - ブラウザで`http://localhost:8080/ping`にアクセス
    - `{"message":"pong"}`が返ってくれば成功
+
+## 利用可能なコマンド
+
+### 開発・実行
+```bash
+# ローカル開発サーバー起動
+make dev
+
+# アプリケーション実行
+make run
+
+# ビルド
+make build
+
+# テスト実行
+make test
+
+# 依存関係の整理
+make tidy
+
+# コードフォーマット
+make fmt
+
+# リント
+make lint
+```
+
+### データ移行・確認
+```bash
+# 日記データ移行（テキストから直接）
+make migrate-diary
+
+# テキストをJSONに変換
+make convert-to-json
+
+# JSONからDBに移行（SQLite）
+make migrate-from-json
+
+# JSONからDBに移行（PostgreSQL）
+make migrate-from-json-prod
+
+# 移行されたデータ確認（SQLite）
+make check-data
+
+# 移行されたデータ確認（PostgreSQL）
+make check-data-prod
+```
 
 ### ホットリロードで立ち上げ
 ```bash
@@ -53,30 +100,6 @@ air init
 # ホットリロードで起動
 air
 ```
-
-## デプロイ
-
-### AWS Lambda へのデプロイ
-
-詳細な手順は [LAMBDA_DEPLOYMENT.md](./LAMBDA_DEPLOYMENT.md) を参照してください。
-
-#### クイックデプロイ
-```bash
-# 環境変数を設定
-export DB_HOST="your-database-host"
-export DB_PORT="5432"
-export DB_USER="your-database-user"
-export DB_PASSWORD="your-database-password"
-export DB_NAME="feelog"
-
-# デプロイ実行
-./deploy.sh
-```
-
-#### 前提条件
-- AWS CLI
-- AWS SAM CLI
-- AWS認証情報の設定
 
 ## データベース
 
@@ -92,7 +115,7 @@ migrate -path ./infra/migrations -database "postgres://ginuser:ginpassword@local
 ## テスト
 ```bash
 # 全テスト実行
-go test $(go list ./... | grep -v '/scripts')
+make test
 ```
 
 ## API ドキュメント
@@ -160,10 +183,12 @@ feelog-backend-go/
 ├── repositories/             # リポジトリ層
 ├── routes/                   # ルーティング設定
 ├── usecases/                 # ユースケース層
+├── scripts/                  # データ移行スクリプト
 ├── main.go                   # Lambda用エントリーポイント
-├── main_local.go             # ローカル開発用エントリーポイント
+├── cmd/local/main.go         # ローカル開発用エントリーポイント
 ├── build-lambda.sh           # Lambdaビルドスクリプト
 ├── deploy.sh                 # デプロイスクリプト
 ├── template.yaml             # AWS SAMテンプレート
+├── Makefile                  # ビルド・実行コマンド
 └── LAMBDA_DEPLOYMENT.md      # Lambdaデプロイガイド
 ```
