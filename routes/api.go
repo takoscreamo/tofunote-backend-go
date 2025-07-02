@@ -6,11 +6,14 @@ import (
 	"os"
 	"time"
 
+	"feelog-backend/routes/middleware"
+
 	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
 )
 
 // SetupAPIEndpoints APIエンドポイントを設定
-func SetupAPIEndpoints(router *gin.Engine, diaryController *controllers.DiaryController, diaryAnalysisController *controllers.DiaryAnalysisController) {
+func SetupAPIEndpoints(router *gin.Engine, diaryController *controllers.DiaryController, diaryAnalysisController *controllers.DiaryAnalysisController, userController *controllers.UserController) {
 	// ヘルスチェックエンドポイント
 	router.GET("/ping", func(c *gin.Context) {
 		log.Printf("[DEBUG] Ping endpoint called - returning pong message")
@@ -55,12 +58,18 @@ func SetupAPIEndpoints(router *gin.Engine, diaryController *controllers.DiaryCon
 
 	api := router.Group("/api")
 	{
-		api.GET("/me/diaries", diaryController.FindAll)
-		api.GET("/me/diaries/range", diaryController.FindByUserIDAndDateRange)
-		api.GET("/me/diaries/:date", diaryController.FindByUserIDAndDate)
-		api.POST("/me/diaries", diaryController.Create)
-		api.PUT("/me/diaries/:date", diaryController.Update)
-		api.DELETE("/me/diaries/:date", diaryController.Delete)
-		api.GET("/me/analyze-diaries", diaryAnalysisController.AnalyzeAllDiariesHandler)
+		api.POST("/login", userController.Login)
+		api.POST("/register", userController.Register)
+
+		// 認証が必要なグループ
+		auth := api.Group("")
+		auth.Use(middleware.JWTAuthMiddleware())
+		auth.GET("/me/diaries", diaryController.FindAll)
+		auth.GET("/me/diaries/range", diaryController.FindByUserIDAndDateRange)
+		auth.GET("/me/diaries/:date", diaryController.FindByUserIDAndDate)
+		auth.POST("/me/diaries", diaryController.Create)
+		auth.PUT("/me/diaries/:date", diaryController.Update)
+		auth.DELETE("/me/diaries/:date", diaryController.Delete)
+		auth.GET("/me/analyze-diaries", diaryAnalysisController.AnalyzeAllDiariesHandler)
 	}
 }

@@ -13,14 +13,17 @@ import (
 
 func main() {
 	infra.Initialize()
-	db := infra.SetupDB()
+	dbConn := infra.SetupDB()
 
-	diaryRepository := repositories.NewDiaryRepository(db)
+	diaryRepository := repositories.NewDiaryRepository(dbConn)
 	diaryUsecase := usecases.NewDiaryUsecase(diaryRepository)
 	diaryController := controllers.NewDiaryController(diaryUsecase)
 
 	diaryAnalysisUsecase := usecases.NewDiaryAnalysisUsecase(diaryRepository)
 	diaryAnalysisController := controllers.NewDiaryAnalysisController(diaryAnalysisUsecase)
+
+	userRepo := repositories.NewUserRepository(dbConn)
+	userController := controllers.NewUserController(userRepo)
 
 	router := gin.Default()
 
@@ -31,7 +34,7 @@ func main() {
 	routes.SetupSwaggerEndpoints(router)
 
 	// APIエンドポイントを設定
-	routes.SetupAPIEndpoints(router, diaryController, diaryAnalysisController)
+	routes.SetupAPIEndpoints(router, diaryController, diaryAnalysisController, userController)
 
 	router.Run()
 }

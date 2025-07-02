@@ -112,7 +112,9 @@ func initializeApp() {
 			log.Println("[DEBUG] Lambda initializeApp: routes.SetupSwaggerEndpoints 完了")
 
 			log.Println("[DEBUG] Lambda initializeApp: routes.SetupAPIEndpoints 開始")
-			routes.SetupAPIEndpoints(router, diaryController, diaryAnalysisController)
+			userRepo := repositories.NewUserRepository(db)
+			userController := controllers.NewUserController(userRepo)
+			routes.SetupAPIEndpoints(router, diaryController, diaryAnalysisController, userController)
 			log.Println("[DEBUG] Lambda initializeApp: routes.SetupAPIEndpoints 完了")
 
 			log.Println("[DEBUG] Lambda initializeApp: ginadapter.New(router) 開始")
