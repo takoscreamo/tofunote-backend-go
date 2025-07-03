@@ -10,6 +10,9 @@ servers:
   - url: https://api.feelog.takoscreamo.com/api
     description: 本番環境
 
+security:
+  - BearerAuth: []
+
 paths:
   /me/diaries:
     get:
