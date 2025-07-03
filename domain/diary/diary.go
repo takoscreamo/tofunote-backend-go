@@ -3,8 +3,8 @@
 package diary
 
 type Diary struct {
-	ID     int
-	UserID int
+	ID     string
+	UserID string
 	Date   string
 	Mental Mental
 	Diary  string

@@ -11,12 +11,12 @@ import (
 
 type IDiaryRepository interface {
 	FindAll() (*[]diary.Diary, error)
-	FindByUserID(userID int) (*[]diary.Diary, error)
-	FindByUserIDAndDate(userID int, date string) (*diary.Diary, error)
-	FindByUserIDAndDateRange(userID int, startDate, endDate string) (*[]diary.Diary, error)
+	FindByUserID(userID string) (*[]diary.Diary, error)
+	FindByUserIDAndDate(userID string, date string) (*diary.Diary, error)
+	FindByUserIDAndDateRange(userID string, startDate, endDate string) (*[]diary.Diary, error)
 	Create(diary *diary.Diary) error
-	Update(userID int, date string, diary *diary.Diary) error
-	Delete(userID int, date string) error
+	Update(userID string, date string, diary *diary.Diary) error
+	Delete(userID string, date string) error
 	// FindByID(diaryId int) (*models.Diary, error)
 }
 
@@ -41,7 +41,7 @@ func (r *DiaryRepository) FindAll() (*[]diary.Diary, error) {
 	return &diaries, nil
 }
 
-func (r *DiaryRepository) FindByUserID(userID int) (*[]diary.Diary, error) {
+func (r *DiaryRepository) FindByUserID(userID string) (*[]diary.Diary, error) {
 	var diaryModels []db.DiaryModel
 	if err := r.db.Where("user_id = ?", userID).Find(&diaryModels).Error; err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func (r *DiaryRepository) FindByUserID(userID int) (*[]diary.Diary, error) {
 	return &diaries, nil
 }
 
-func (r *DiaryRepository) FindByUserIDAndDate(userID int, date string) (*diary.Diary, error) {
+func (r *DiaryRepository) FindByUserIDAndDate(userID string, date string) (*diary.Diary, error) {
 	var diaryModel db.DiaryModel
 	if err := r.db.Where("user_id = ? AND date = ?", userID, date).First(&diaryModel).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -65,7 +65,7 @@ func (r *DiaryRepository) FindByUserIDAndDate(userID int, date string) (*diary.D
 	return diaryModel.ToDomain(), nil
 }
 
-func (r *DiaryRepository) FindByUserIDAndDateRange(userID int, startDate, endDate string) (*[]diary.Diary, error) {
+func (r *DiaryRepository) FindByUserIDAndDateRange(userID string, startDate, endDate string) (*[]diary.Diary, error) {
 	var diaryModels []db.DiaryModel
 	if err := r.db.Where("user_id = ? AND date BETWEEN ? AND ?", userID, startDate, endDate).Find(&diaryModels).Error; err != nil {
 		return nil, err
@@ -91,7 +91,7 @@ func (r *DiaryRepository) Create(diary *diary.Diary) error {
 	return nil
 }
 
-func (r *DiaryRepository) Update(userID int, date string, diary *diary.Diary) error {
+func (r *DiaryRepository) Update(userID string, date string, diary *diary.Diary) error {
 	model := db.FromDomain(diary)
 	result := r.db.Where("user_id = ? AND date = ?", userID, date).Updates(model)
 	if result.Error != nil {
@@ -103,7 +103,7 @@ func (r *DiaryRepository) Update(userID int, date string, diary *diary.Diary) er
 	return nil
 }
 
-func (r *DiaryRepository) Delete(userID int, date string) error {
+func (r *DiaryRepository) Delete(userID string, date string) error {
 	result := r.db.Unscoped().Where("user_id = ? AND date = ?", userID, date).Delete(&db.DiaryModel{})
 	if result.Error != nil {
 		return result.Error

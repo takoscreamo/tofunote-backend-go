@@ -5,10 +5,10 @@ info:
   version: 1.0.0
 
 servers:
-  - url: https://api.feelog.takoscreamo.com/api
-    description: 本番環境
   - url: http://localhost:8080/api
     description: ローカル開発環境
+  - url: https://api.feelog.takoscreamo.com/api
+    description: 本番環境
 
 paths:
   /me/diaries:
@@ -285,6 +285,24 @@ paths:
                 $ref: '#/components/schemas/LoginResponse'
         '401':
           description: 認証失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /guest-login:
+    post:
+      summary: ゲストログイン
+      description: ゲストユーザーとしてJWTトークンを発行する
+      responses:
+        '200':
+          description: ゲストトークン発行成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '500':
+          description: サーバーエラー
           content:
             application/json:
               schema:

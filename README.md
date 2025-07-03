@@ -165,4 +165,10 @@ feelog-backend-go/
 - DBテーブル削除などは必要に応じて実行
 - Gin導入: `go get -u github.com/gin-gonic/gin`
 
+
+## TODO
+- デバッグ
+- ロギング
+- pgadmin
+
 ---

@@ -39,7 +39,7 @@ type AnalysisResponse struct {
 }
 
 // AnalyzeUserDiaries は特定のユーザーの日記を分析する
-func (u *DiaryAnalysisUsecase) AnalyzeUserDiaries(userID int) (string, error) {
+func (u *DiaryAnalysisUsecase) AnalyzeUserDiaries(userID string) (string, error) {
 	diaries, err := u.DiaryRepository.FindByUserID(userID)
 	if err != nil {
 		return "", err
@@ -50,8 +50,8 @@ func (u *DiaryAnalysisUsecase) AnalyzeUserDiaries(userID int) (string, error) {
 	for _, diary := range *diaries {
 		// 各フィールドを結合
 		entry := strings.Join([]string{
-			"ID: " + strconv.Itoa(diary.ID),
-			"UserID: " + strconv.Itoa(diary.UserID),
+			"ID: " + diary.ID,
+			"UserID: " + diary.UserID,
 			"Date: " + diary.Date,
 			"Mental: " + strconv.Itoa(int(diary.Mental)),
 			"Diary: " + diary.Diary,
@@ -130,8 +130,8 @@ func (u *DiaryAnalysisUsecase) AnalyzeAllDiaries() (string, error) {
 	for _, diary := range *diaries {
 		// 各フィールドを結合
 		entry := strings.Join([]string{
-			"ID: " + strconv.Itoa(diary.ID),
-			"UserID: " + strconv.Itoa(diary.UserID),
+			"ID: " + diary.ID,
+			"UserID: " + diary.UserID,
 			"Date: " + diary.Date,
 			"Mental: " + strconv.Itoa(int(diary.Mental)),
 			"Diary: " + diary.Diary,

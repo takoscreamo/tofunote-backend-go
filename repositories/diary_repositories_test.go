@@ -41,8 +41,8 @@ var testDiaries = func() []diary.Diary {
 	m5, _ := diary.NewMental(5)
 	m3, _ := diary.NewMental(3)
 	return []diary.Diary{
-		{ID: 1, UserID: 101, Date: "2025-05-01", Mental: m5, Diary: "今日は楽しい一日だった。"},
-		{ID: 2, UserID: 102, Date: "2025-05-02", Mental: m3, Diary: "少し疲れたけど頑張った。"},
+		{ID: "1", UserID: "101", Date: "2025-05-01", Mental: m5, Diary: "今日は楽しい一日だった。"},
+		{ID: "2", UserID: "102", Date: "2025-05-02", Mental: m3, Diary: "少し疲れたけど頑張った。"},
 	}
 }()
 
@@ -58,8 +58,8 @@ func TestFindAll(t *testing.T) {
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery(`(?i)SELECT \* FROM "diaries" WHERE "diaries"."deleted_at" IS NULL`).WillReturnRows(
 					sqlmock.NewRows([]string{"id", "user_id", "date", "mental", "diary", "created_at", "updated_at", "deleted_at"}).
-						AddRow(1, 101, "2025-05-01", 5, "今日は楽しい一日だった。", time.Now(), time.Now(), nil).
-						AddRow(2, 102, "2025-05-02", 3, "少し疲れたけど頑張った。", time.Now(), time.Now(), nil),
+						AddRow("1", "101", "2025-05-01", 5, "今日は楽しい一日だった。", time.Now(), time.Now(), nil).
+						AddRow("2", "102", "2025-05-02", 3, "少し疲れたけど頑張った。", time.Now(), time.Now(), nil),
 				)
 			},
 			expectedDiaries: testDiaries,
@@ -134,11 +134,11 @@ func TestCreate(t *testing.T) {
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.ExpectQuery(`INSERT INTO "diaries"`).
-					WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+					WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("1"))
 				mock.ExpectCommit()
 			},
 			createDiary: diary.Diary{
-				UserID: 101,
+				UserID: "101",
 				Date:   "2025-05-01",
 				Mental: m5,
 				Diary:  "新しい日記内容",
@@ -154,7 +154,7 @@ func TestCreate(t *testing.T) {
 				mock.ExpectRollback()
 			},
 			createDiary: diary.Diary{
-				UserID: 101,
+				UserID: "101",
 				Date:   "2025-05-01",
 				Mental: m5,
 				Diary:  "重複する日記",
@@ -171,7 +171,7 @@ func TestCreate(t *testing.T) {
 				mock.ExpectRollback()
 			},
 			createDiary: diary.Diary{
-				UserID: 101,
+				UserID: "101",
 				Date:   "2025-05-01",
 				Mental: m5,
 				Diary:  "DBエラー時の日記",
@@ -209,7 +209,7 @@ func TestUpdate(t *testing.T) {
 	tests := []struct {
 		name         string
 		setupMock    func(sqlmock.Sqlmock)
-		userID       int
+		userID       string
 		date         string
 		updateDiary  diary.Diary
 		expectError  bool
@@ -220,14 +220,14 @@ func TestUpdate(t *testing.T) {
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.ExpectExec(`UPDATE "diaries"`).
-					WithArgs(sqlmock.AnyArg(), 101, "2025-05-01", 5, "更新内容", 101, "2025-05-01").
+					WithArgs(sqlmock.AnyArg(), "101", "2025-05-01", 5, "更新内容", "101", "2025-05-01").
 					WillReturnResult(sqlmock.NewResult(1, 1))
 				mock.ExpectCommit()
 			},
-			userID: 101,
+			userID: "101",
 			date:   "2025-05-01",
 			updateDiary: diary.Diary{
-				UserID: 101,
+				UserID: "101",
 				Date:   "2025-05-01",
 				Mental: m5,
 				Diary:  "更新内容",
@@ -239,13 +239,13 @@ func TestUpdate(t *testing.T) {
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.ExpectExec(`UPDATE "diaries"`).
-					WithArgs(sqlmock.AnyArg(), 101, "2025-05-01", 5, "更新内容", 101, "2025-05-01").
+					WithArgs(sqlmock.AnyArg(), "101", "2025-05-01", 5, "更新内容", "101", "2025-05-01").
 					WillReturnResult(sqlmock.NewResult(1, 0))
 				mock.ExpectCommit()
 			},
-			userID:       101,
+			userID:       "101",
 			date:         "2025-05-01",
-			updateDiary:  diary.Diary{UserID: 101, Date: "2025-05-01", Mental: m5, Diary: "更新内容"},
+			updateDiary:  diary.Diary{UserID: "101", Date: "2025-05-01", Mental: m5, Diary: "更新内容"},
 			expectError:  true,
 			errorMessage: "指定された日付の日記が見つかりません",
 		},
@@ -254,13 +254,13 @@ func TestUpdate(t *testing.T) {
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.ExpectExec(`UPDATE "diaries"`).
-					WithArgs(sqlmock.AnyArg(), 101, "2025-05-01", 5, "更新内容", 101, "2025-05-01").
+					WithArgs(sqlmock.AnyArg(), "101", "2025-05-01", 5, "更新内容", "101", "2025-05-01").
 					WillReturnError(errors.New("DB error"))
 				mock.ExpectRollback()
 			},
-			userID:       101,
+			userID:       "101",
 			date:         "2025-05-01",
-			updateDiary:  diary.Diary{UserID: 101, Date: "2025-05-01", Mental: m5, Diary: "更新内容"},
+			updateDiary:  diary.Diary{UserID: "101", Date: "2025-05-01", Mental: m5, Diary: "更新内容"},
 			expectError:  true,
 			errorMessage: "DB error",
 		},
@@ -293,7 +293,7 @@ func TestDelete(t *testing.T) {
 	tests := []struct {
 		name         string
 		setupMock    func(sqlmock.Sqlmock)
-		userID       int
+		userID       string
 		date         string
 		expectError  bool
 		errorMessage string
@@ -303,11 +303,11 @@ func TestDelete(t *testing.T) {
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.ExpectExec(`DELETE FROM "diaries"`).
-					WithArgs(101, "2025-05-01").
+					WithArgs("101", "2025-05-01").
 					WillReturnResult(sqlmock.NewResult(1, 1))
 				mock.ExpectCommit()
 			},
-			userID:      101,
+			userID:      "101",
 			date:        "2025-05-01",
 			expectError: false,
 		},
@@ -316,11 +316,11 @@ func TestDelete(t *testing.T) {
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.ExpectExec(`DELETE FROM "diaries"`).
-					WithArgs(101, "2025-05-01").
+					WithArgs("101", "2025-05-01").
 					WillReturnResult(sqlmock.NewResult(1, 0))
 				mock.ExpectCommit()
 			},
-			userID:       101,
+			userID:       "101",
 			date:         "2025-05-01",
 			expectError:  true,
 			errorMessage: "指定された日付の日記が見つかりません",
@@ -330,11 +330,11 @@ func TestDelete(t *testing.T) {
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.ExpectExec(`DELETE FROM "diaries"`).
-					WithArgs(101, "2025-05-01").
+					WithArgs("101", "2025-05-01").
 					WillReturnError(errors.New("DB error"))
 				mock.ExpectRollback()
 			},
-			userID:       101,
+			userID:       "101",
 			date:         "2025-05-01",
 			expectError:  true,
 			errorMessage: "DB error",
@@ -367,8 +367,8 @@ func TestDelete(t *testing.T) {
 func TestFindByUserIDAndDate(t *testing.T) {
 	m5, _ := diary.NewMental(5)
 	expectedDiary := diary.Diary{
-		ID:     1,
-		UserID: 101,
+		ID:     "1",
+		UserID: "101",
 		Date:   "2025-05-01",
 		Mental: m5,
 		Diary:  "テスト日記",
@@ -377,7 +377,7 @@ func TestFindByUserIDAndDate(t *testing.T) {
 	tests := []struct {
 		name          string
 		setupMock     func(sqlmock.Sqlmock)
-		userID        int
+		userID        string
 		date          string
 		expectedDiary *diary.Diary
 		expectError   bool
@@ -387,12 +387,12 @@ func TestFindByUserIDAndDate(t *testing.T) {
 			name: "正常系：指定されたuser_idとdateの日記を取得できる",
 			setupMock: func(mock sqlmock.Sqlmock) {
 				rows := sqlmock.NewRows([]string{"id", "user_id", "date", "mental", "diary", "created_at", "updated_at", "deleted_at"}).
-					AddRow(1, 101, "2025-05-01", 5, "テスト日記", time.Now(), time.Now(), nil)
+					AddRow("1", "101", "2025-05-01", 5, "テスト日記", time.Now(), time.Now(), nil)
 				mock.ExpectQuery(`SELECT \* FROM "diaries"`).
-					WithArgs(101, "2025-05-01", 1).
+					WithArgs("101", "2025-05-01", 1).
 					WillReturnRows(rows)
 			},
-			userID:        101,
+			userID:        "101",
 			date:          "2025-05-01",
 			expectedDiary: &expectedDiary,
 			expectError:   false,
@@ -401,10 +401,10 @@ func TestFindByUserIDAndDate(t *testing.T) {
 			name: "異常系：指定されたuser_idとdateの日記が見つからない",
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery(`SELECT \* FROM "diaries"`).
-					WithArgs(999, "2025-05-01", 1).
+					WithArgs("999", "2025-05-01", 1).
 					WillReturnError(gorm.ErrRecordNotFound)
 			},
-			userID:        999,
+			userID:        "999",
 			date:          "2025-05-01",
 			expectedDiary: nil,
 			expectError:   true,
@@ -414,10 +414,10 @@ func TestFindByUserIDAndDate(t *testing.T) {
 			name: "異常系：DBエラー",
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery(`SELECT \* FROM "diaries"`).
-					WithArgs(101, "2025-05-01", 1).
+					WithArgs("101", "2025-05-01", 1).
 					WillReturnError(errors.New("DB error"))
 			},
-			userID:        101,
+			userID:        "101",
 			date:          "2025-05-01",
 			expectedDiary: nil,
 			expectError:   true,
@@ -468,7 +468,7 @@ func TestFindByUserIDAndDateRange(t *testing.T) {
 	tests := []struct {
 		name            string
 		setupMock       func(sqlmock.Sqlmock)
-		userID          int
+		userID          string
 		startDate       string
 		endDate         string
 		expectedDiaries []diary.Diary
@@ -479,18 +479,18 @@ func TestFindByUserIDAndDateRange(t *testing.T) {
 			name: "正常系：指定された期間の日記を取得できる",
 			setupMock: func(mock sqlmock.Sqlmock) {
 				rows := sqlmock.NewRows([]string{"id", "user_id", "date", "mental", "diary", "created_at", "updated_at", "deleted_at"}).
-					AddRow(1, 101, "2025-05-01", 5, "今日は楽しい一日だった。", time.Now(), time.Now(), nil).
-					AddRow(2, 101, "2025-05-02", 3, "少し疲れたけど頑張った。", time.Now(), time.Now(), nil)
+					AddRow("1", "101", "2025-05-01", 5, "今日は楽しい一日だった。", time.Now(), time.Now(), nil).
+					AddRow("2", "101", "2025-05-02", 3, "少し疲れたけど頑張った。", time.Now(), time.Now(), nil)
 				mock.ExpectQuery(`SELECT \* FROM "diaries"`).
-					WithArgs(101, "2025-05-01", "2025-05-31").
+					WithArgs("101", "2025-05-01", "2025-05-31").
 					WillReturnRows(rows)
 			},
-			userID:    101,
+			userID:    "101",
 			startDate: "2025-05-01",
 			endDate:   "2025-05-31",
 			expectedDiaries: []diary.Diary{
-				{ID: 1, UserID: 101, Date: "2025-05-01", Mental: testDiaries[0].Mental, Diary: "今日は楽しい一日だった。"},
-				{ID: 2, UserID: 101, Date: "2025-05-02", Mental: testDiaries[1].Mental, Diary: "少し疲れたけど頑張った。"},
+				{ID: "1", UserID: "101", Date: "2025-05-01", Mental: testDiaries[0].Mental, Diary: "今日は楽しい一日だった。"},
+				{ID: "2", UserID: "101", Date: "2025-05-02", Mental: testDiaries[1].Mental, Diary: "少し疲れたけど頑張った。"},
 			},
 			expectError: false,
 		},
@@ -499,10 +499,10 @@ func TestFindByUserIDAndDateRange(t *testing.T) {
 			setupMock: func(mock sqlmock.Sqlmock) {
 				rows := sqlmock.NewRows([]string{"id", "user_id", "date", "mental", "diary", "created_at", "updated_at", "deleted_at"})
 				mock.ExpectQuery(`SELECT \* FROM "diaries"`).
-					WithArgs(101, "2025-06-01", "2025-06-30").
+					WithArgs("101", "2025-06-01", "2025-06-30").
 					WillReturnRows(rows)
 			},
-			userID:          101,
+			userID:          "101",
 			startDate:       "2025-06-01",
 			endDate:         "2025-06-30",
 			expectedDiaries: []diary.Diary{},
@@ -512,10 +512,10 @@ func TestFindByUserIDAndDateRange(t *testing.T) {
 			name: "異常系：DBエラー",
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery(`SELECT \* FROM "diaries"`).
-					WithArgs(101, "2025-05-01", "2025-05-31").
+					WithArgs("101", "2025-05-01", "2025-05-31").
 					WillReturnError(errors.New("DB error"))
 			},
-			userID:          101,
+			userID:          "101",
 			startDate:       "2025-05-01",
 			endDate:         "2025-05-31",
 			expectedDiaries: nil,

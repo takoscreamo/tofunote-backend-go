@@ -18,9 +18,18 @@ func NewDiaryController(usecase usecases.IDiaryUsecase) *DiaryController {
 }
 
 func (c *DiaryController) FindAll(ctx *gin.Context) {
-	// ハードコードでuser_id=1を使用
-	userID := 1
-	diaries, err := c.usecase.FindByUserID(userID)
+	// JWTトークンからuserIDを取得
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "認証情報が見つかりません"})
+		return
+	}
+	userIDStr, ok := userID.(string)
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザーIDの形式が不正です"})
+		return
+	}
+	diaries, err := c.usecase.FindByUserID(userIDStr)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -35,11 +44,20 @@ func (c *DiaryController) FindAll(ctx *gin.Context) {
 }
 
 func (c *DiaryController) FindByUserIDAndDate(ctx *gin.Context) {
-	// ハードコードでuser_id=1を使用
-	userID := 1
+	// JWTトークンからuserIDを取得
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "認証情報が見つかりません"})
+		return
+	}
+	userIDStr, ok := userID.(string)
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザーIDの形式が不正です"})
+		return
+	}
 	date := ctx.Param("date")
 
-	diary, err := c.usecase.FindByUserIDAndDate(userID, date)
+	diary, err := c.usecase.FindByUserIDAndDate(userIDStr, date)
 	if err != nil {
 		if strings.Contains(err.Error(), "指定された日付の日記が見つかりません") {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -53,8 +71,17 @@ func (c *DiaryController) FindByUserIDAndDate(ctx *gin.Context) {
 }
 
 func (c *DiaryController) FindByUserIDAndDateRange(ctx *gin.Context) {
-	// ハードコードでuser_id=1を使用
-	userID := 1
+	// JWTトークンからuserIDを取得
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "認証情報が見つかりません"})
+		return
+	}
+	userIDStr, ok := userID.(string)
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザーIDの形式が不正です"})
+		return
+	}
 	startDate := ctx.Query("start_date")
 	endDate := ctx.Query("end_date")
 
@@ -64,7 +91,7 @@ func (c *DiaryController) FindByUserIDAndDateRange(ctx *gin.Context) {
 		return
 	}
 
-	diaries, err := c.usecase.FindByUserIDAndDateRange(userID, startDate, endDate)
+	diaries, err := c.usecase.FindByUserIDAndDateRange(userIDStr, startDate, endDate)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -90,8 +117,8 @@ type UpdateDiaryDTO struct {
 }
 
 type DiaryResponseDTO struct {
-	ID     int    `json:"id"`
-	UserID int    `json:"user_id"`
+	ID     string `json:"id"`
+	UserID string `json:"user_id"`
 	Date   string `json:"date"`
 	Mental int    `json:"mental"`
 	Diary  string `json:"diary"`
@@ -120,10 +147,19 @@ func (c *DiaryController) Create(ctx *gin.Context) {
 		return
 	}
 
-	// ハードコードでuser_id=1を使用
-	userID := 1
+	// JWTトークンからuserIDを取得
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "認証情報が見つかりません"})
+		return
+	}
+	userIDStr, ok := userID.(string)
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザーIDの形式が不正です"})
+		return
+	}
 	newDiary := diary.Diary{
-		UserID: userID,
+		UserID: userIDStr,
 		Date:   req.Date,
 		Mental: mental,
 		Diary:  req.Diary,
@@ -142,8 +178,17 @@ func (c *DiaryController) Create(ctx *gin.Context) {
 }
 
 func (c *DiaryController) Update(ctx *gin.Context) {
-	// ハードコードでuser_id=1を使用
-	userID := 1
+	// JWTトークンからuserIDを取得
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "認証情報が見つかりません"})
+		return
+	}
+	userIDStr, ok := userID.(string)
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザーIDの形式が不正です"})
+		return
+	}
 	date := ctx.Param("date")
 
 	var req UpdateDiaryDTO
@@ -159,13 +204,13 @@ func (c *DiaryController) Update(ctx *gin.Context) {
 	}
 
 	updateDiary := diary.Diary{
-		UserID: userID,
+		UserID: userIDStr,
 		Date:   date,
 		Mental: mental,
 		Diary:  req.Diary,
 	}
 
-	err = c.usecase.Update(userID, date, &updateDiary)
+	err = c.usecase.Update(userIDStr, date, &updateDiary)
 	if err != nil {
 		if strings.Contains(err.Error(), "指定された日付の日記が見つかりません") {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -179,11 +224,20 @@ func (c *DiaryController) Update(ctx *gin.Context) {
 }
 
 func (c *DiaryController) Delete(ctx *gin.Context) {
-	// ハードコードでuser_id=1を使用
-	userID := 1
+	// JWTトークンからuserIDを取得
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "認証情報が見つかりません"})
+		return
+	}
+	userIDStr, ok := userID.(string)
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザーIDの形式が不正です"})
+		return
+	}
 	date := ctx.Param("date")
 
-	err := c.usecase.Delete(userID, date)
+	err := c.usecase.Delete(userIDStr, date)
 	if err != nil {
 		if strings.Contains(err.Error(), "指定された日付の日記が見つかりません") {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})

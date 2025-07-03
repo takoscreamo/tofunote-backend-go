@@ -19,7 +19,7 @@ func (m *mockDiaryRepository) FindAll() (*[]diary.Diary, error) {
 	return m.diaries, m.err
 }
 
-func (m *mockDiaryRepository) FindByUserID(userID int) (*[]diary.Diary, error) {
+func (m *mockDiaryRepository) FindByUserID(userID string) (*[]diary.Diary, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
@@ -38,7 +38,7 @@ func (m *mockDiaryRepository) FindByUserID(userID int) (*[]diary.Diary, error) {
 	return &userDiaries, nil
 }
 
-func (m *mockDiaryRepository) FindByUserIDAndDate(userID int, date string) (*diary.Diary, error) {
+func (m *mockDiaryRepository) FindByUserIDAndDate(userID string, date string) (*diary.Diary, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
@@ -53,7 +53,7 @@ func (m *mockDiaryRepository) FindByUserIDAndDate(userID int, date string) (*dia
 	return nil, errors.New("指定された日付の日記が見つかりません")
 }
 
-func (m *mockDiaryRepository) FindByUserIDAndDateRange(userID int, startDate, endDate string) (*[]diary.Diary, error) {
+func (m *mockDiaryRepository) FindByUserIDAndDateRange(userID string, startDate, endDate string) (*[]diary.Diary, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
@@ -76,11 +76,11 @@ func (m *mockDiaryRepository) Create(diary *diary.Diary) error {
 	return m.err
 }
 
-func (m *mockDiaryRepository) Update(userID int, date string, diary *diary.Diary) error {
+func (m *mockDiaryRepository) Update(userID string, date string, diary *diary.Diary) error {
 	return m.err
 }
 
-func (m *mockDiaryRepository) Delete(userID int, date string) error {
+func (m *mockDiaryRepository) Delete(userID string, date string) error {
 	return m.err
 }
 
@@ -89,9 +89,9 @@ var testDiaries = func() []diary.Diary {
 	m5, _ := diary.NewMental(5)
 	m3, _ := diary.NewMental(3)
 	return []diary.Diary{
-		{ID: 1, UserID: 1, Date: "2025-05-01", Mental: m5, Diary: "今日は良い一日だった"},
-		{ID: 2, UserID: 1, Date: "2025-05-02", Mental: m3, Diary: "少し疲れた"},
-		{ID: 3, UserID: 2, Date: "2025-05-01", Mental: m5, Diary: "別のユーザーの日記"},
+		{ID: "1", UserID: "1", Date: "2025-05-01", Mental: m5, Diary: "今日は良い一日だった"},
+		{ID: "2", UserID: "1", Date: "2025-05-02", Mental: m3, Diary: "少し疲れた"},
+		{ID: "3", UserID: "2", Date: "2025-05-01", Mental: m5, Diary: "別のユーザーの日記"},
 	}
 }()
 
@@ -152,14 +152,14 @@ func TestDiaryUsecase_FindAll(t *testing.T) {
 func TestDiaryUsecase_FindByUserID(t *testing.T) {
 	tests := []struct {
 		name      string
-		userID    int
+		userID    string
 		setupMock func() *mockDiaryRepository
 		expected  *[]diary.Diary
 		hasError  bool
 	}{
 		{
 			name:   "正常系：特定ユーザーの日記を取得できる",
-			userID: 1,
+			userID: "1",
 			setupMock: func() *mockDiaryRepository {
 				diaries := make([]diary.Diary, len(testDiaries))
 				copy(diaries, testDiaries)
@@ -169,14 +169,14 @@ func TestDiaryUsecase_FindByUserID(t *testing.T) {
 				}
 			},
 			expected: &[]diary.Diary{
-				{ID: 1, UserID: 1, Date: "2025-05-01", Mental: testDiaries[0].Mental, Diary: "今日は良い一日だった"},
-				{ID: 2, UserID: 1, Date: "2025-05-02", Mental: testDiaries[1].Mental, Diary: "少し疲れた"},
+				{ID: "1", UserID: "1", Date: "2025-05-01", Mental: testDiaries[0].Mental, Diary: "今日は良い一日だった"},
+				{ID: "2", UserID: "1", Date: "2025-05-02", Mental: testDiaries[1].Mental, Diary: "少し疲れた"},
 			},
 			hasError: false,
 		},
 		{
 			name:   "正常系：存在しないユーザーの場合は空配列を返す",
-			userID: 999,
+			userID: "999",
 			setupMock: func() *mockDiaryRepository {
 				diaries := make([]diary.Diary, len(testDiaries))
 				copy(diaries, testDiaries)
@@ -190,7 +190,7 @@ func TestDiaryUsecase_FindByUserID(t *testing.T) {
 		},
 		{
 			name:   "異常系：リポジトリがエラーを返す",
-			userID: 1,
+			userID: "1",
 			setupMock: func() *mockDiaryRepository {
 				return &mockDiaryRepository{
 					diaries: nil,
@@ -242,7 +242,7 @@ func TestDiaryUsecase_FindByUserID(t *testing.T) {
 func TestDiaryUsecase_FindByUserIDAndDate(t *testing.T) {
 	tests := []struct {
 		name      string
-		userID    int
+		userID    string
 		date      string
 		setupMock func() *mockDiaryRepository
 		expected  *diary.Diary
@@ -250,7 +250,7 @@ func TestDiaryUsecase_FindByUserIDAndDate(t *testing.T) {
 	}{
 		{
 			name:   "正常系：指定されたユーザーと日付の日記を取得できる",
-			userID: 1,
+			userID: "1",
 			date:   "2025-05-01",
 			setupMock: func() *mockDiaryRepository {
 				diaries := make([]diary.Diary, len(testDiaries))
@@ -265,7 +265,7 @@ func TestDiaryUsecase_FindByUserIDAndDate(t *testing.T) {
 		},
 		{
 			name:   "異常系：指定された日記が見つからない",
-			userID: 1,
+			userID: "1",
 			date:   "2025-05-99",
 			setupMock: func() *mockDiaryRepository {
 				diaries := make([]diary.Diary, len(testDiaries))
@@ -280,7 +280,7 @@ func TestDiaryUsecase_FindByUserIDAndDate(t *testing.T) {
 		},
 		{
 			name:   "異常系：リポジトリがエラーを返す",
-			userID: 1,
+			userID: "1",
 			date:   "2025-05-01",
 			setupMock: func() *mockDiaryRepository {
 				return &mockDiaryRepository{
@@ -324,7 +324,7 @@ func TestDiaryUsecase_Create(t *testing.T) {
 		{
 			name: "正常系：日記を作成できる",
 			diary: &diary.Diary{
-				UserID: 1,
+				UserID: "1",
 				Date:   "2025-05-03",
 				Mental: testDiaries[0].Mental,
 				Diary:  "新しい日記",
@@ -339,7 +339,7 @@ func TestDiaryUsecase_Create(t *testing.T) {
 		{
 			name: "異常系：リポジトリがエラーを返す",
 			diary: &diary.Diary{
-				UserID: 1,
+				UserID: "1",
 				Date:   "2025-05-03",
 				Mental: testDiaries[0].Mental,
 				Diary:  "新しい日記",
@@ -372,7 +372,7 @@ func TestDiaryUsecase_Create(t *testing.T) {
 func TestDiaryUsecase_Update(t *testing.T) {
 	tests := []struct {
 		name      string
-		userID    int
+		userID    string
 		date      string
 		diary     *diary.Diary
 		setupMock func() *mockDiaryRepository
@@ -380,10 +380,10 @@ func TestDiaryUsecase_Update(t *testing.T) {
 	}{
 		{
 			name:   "正常系：日記を更新できる",
-			userID: 1,
+			userID: "1",
 			date:   "2025-05-01",
 			diary: &diary.Diary{
-				UserID: 1,
+				UserID: "1",
 				Date:   "2025-05-01",
 				Mental: testDiaries[0].Mental,
 				Diary:  "更新された日記",
@@ -397,10 +397,10 @@ func TestDiaryUsecase_Update(t *testing.T) {
 		},
 		{
 			name:   "異常系：リポジトリがエラーを返す",
-			userID: 1,
+			userID: "1",
 			date:   "2025-05-01",
 			diary: &diary.Diary{
-				UserID: 1,
+				UserID: "1",
 				Date:   "2025-05-01",
 				Mental: testDiaries[0].Mental,
 				Diary:  "更新された日記",
@@ -433,14 +433,14 @@ func TestDiaryUsecase_Update(t *testing.T) {
 func TestDiaryUsecase_Delete(t *testing.T) {
 	tests := []struct {
 		name      string
-		userID    int
+		userID    string
 		date      string
 		setupMock func() *mockDiaryRepository
 		hasError  bool
 	}{
 		{
 			name:   "正常系：日記を削除できる",
-			userID: 1,
+			userID: "1",
 			date:   "2025-05-01",
 			setupMock: func() *mockDiaryRepository {
 				return &mockDiaryRepository{
@@ -451,7 +451,7 @@ func TestDiaryUsecase_Delete(t *testing.T) {
 		},
 		{
 			name:   "異常系：リポジトリがエラーを返す",
-			userID: 1,
+			userID: "1",
 			date:   "2025-05-01",
 			setupMock: func() *mockDiaryRepository {
 				return &mockDiaryRepository{
@@ -481,7 +481,7 @@ func TestDiaryUsecase_Delete(t *testing.T) {
 func TestDiaryUsecase_FindByUserIDAndDateRange(t *testing.T) {
 	tests := []struct {
 		name      string
-		userID    int
+		userID    string
 		startDate string
 		endDate   string
 		setupMock func() *mockDiaryRepository
@@ -490,7 +490,7 @@ func TestDiaryUsecase_FindByUserIDAndDateRange(t *testing.T) {
 	}{
 		{
 			name:      "正常系：指定された期間の日記を取得できる",
-			userID:    1,
+			userID:    "1",
 			startDate: "2025-05-01",
 			endDate:   "2025-05-02",
 			setupMock: func() *mockDiaryRepository {
@@ -502,14 +502,14 @@ func TestDiaryUsecase_FindByUserIDAndDateRange(t *testing.T) {
 				}
 			},
 			expected: &[]diary.Diary{
-				{ID: 1, UserID: 1, Date: "2025-05-01", Mental: testDiaries[0].Mental, Diary: "今日は良い一日だった"},
-				{ID: 2, UserID: 1, Date: "2025-05-02", Mental: testDiaries[1].Mental, Diary: "少し疲れた"},
+				{ID: "1", UserID: "1", Date: "2025-05-01", Mental: testDiaries[0].Mental, Diary: "今日は良い一日だった"},
+				{ID: "2", UserID: "1", Date: "2025-05-02", Mental: testDiaries[1].Mental, Diary: "少し疲れた"},
 			},
 			hasError: false,
 		},
 		{
 			name:      "正常系：指定された期間に日記がない場合は空配列を返す",
-			userID:    1,
+			userID:    "1",
 			startDate: "2025-06-01",
 			endDate:   "2025-06-30",
 			setupMock: func() *mockDiaryRepository {
@@ -525,7 +525,7 @@ func TestDiaryUsecase_FindByUserIDAndDateRange(t *testing.T) {
 		},
 		{
 			name:      "正常系：存在しないユーザーの場合は空配列を返す",
-			userID:    999,
+			userID:    "999",
 			startDate: "2025-05-01",
 			endDate:   "2025-05-02",
 			setupMock: func() *mockDiaryRepository {
@@ -541,7 +541,7 @@ func TestDiaryUsecase_FindByUserIDAndDateRange(t *testing.T) {
 		},
 		{
 			name:      "異常系：リポジトリがエラーを返す",
-			userID:    1,
+			userID:    "1",
 			startDate: "2025-05-01",
 			endDate:   "2025-05-02",
 			setupMock: func() *mockDiaryRepository {

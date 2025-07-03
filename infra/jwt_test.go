@@ -7,7 +7,7 @@ import (
 )
 
 func TestGenerateAndParseToken_OK(t *testing.T) {
-	userID := int64(123)
+	userID := "123"
 	token, err := GenerateToken(userID)
 	assert.NoError(t, err)
 	parsedID, err := ParseToken(token)

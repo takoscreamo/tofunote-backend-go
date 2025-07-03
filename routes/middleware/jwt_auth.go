@@ -4,10 +4,21 @@ import (
 	"net/http"
 	"strings"
 
+	"feelog-backend/domain/user"
 	"feelog-backend/infra"
+	"feelog-backend/repositories"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
+
+var dbInstance *gorm.DB
+var userRepo user.Repository
+
+func SetAuthDB(db *gorm.DB) {
+	dbInstance = db
+	userRepo = repositories.NewUserRepository(db)
+}
 
 func JWTAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -24,8 +35,16 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		// userIDをコンテキストにセット
+		// userIDからユーザー情報取得
+		var isGuest bool
+		if userRepo != nil {
+			u, err := userRepo.FindByID(userID)
+			if err == nil && u != nil {
+				isGuest = u.IsGuest
+			}
+		}
 		c.Set("userID", userID)
+		c.Set("isGuest", isGuest)
 		c.Next()
 	}
 }

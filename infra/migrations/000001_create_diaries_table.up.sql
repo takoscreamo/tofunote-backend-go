@@ -1,6 +1,8 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE diaries (
-    id BIGSERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL,
     date DATE NOT NULL,
     mental INTEGER NOT NULL,
     diary TEXT NOT NULL,

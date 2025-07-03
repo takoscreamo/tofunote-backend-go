@@ -30,6 +30,10 @@ func (m *mockUserRepo) Create(u *user.User) error {
 	m.createdUser = u
 	return m.err
 }
+func (m *mockUserRepo) FindByID(id string) (*user.User, error) {
+	return m.userByEmail, m.err
+}
+func (m *mockUserRepo) Update(u *user.User) error { return nil }
 
 func TestUserController_Register_Login(t *testing.T) {
 	gin.SetMode(gin.TestMode)
@@ -51,7 +55,7 @@ func TestUserController_Register_Login(t *testing.T) {
 			loginBody:      LoginRequest{Email: "test@example.com", Password: "password"},
 			loginRepo: func() *mockUserRepo {
 				hash, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
-				return &mockUserRepo{userByEmail: &user.User{ID: 1, Email: "test@example.com", PasswordHash: string(hash)}}
+				return &mockUserRepo{userByEmail: &user.User{ID: "1", Email: "test@example.com", PasswordHash: string(hash)}}
 			}(),
 			loginStatus: http.StatusOK,
 			comment:     "正常な登録とログインができる",

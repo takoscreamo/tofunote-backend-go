@@ -1,15 +1,25 @@
 package infra
 
 import (
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtSecret = []byte("your-secret-key") // TODO: .envから取得するように
+var jwtSecret = []byte(getJWTSecret())
+
+func getJWTSecret() string {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		// デフォルト値（開発用）を返す
+		return "your-secret-key"
+	}
+	return secret
+}
 
 // JWT生成
-func GenerateToken(userID int64) (string, error) {
+func GenerateToken(userID string) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": userID,
 		"exp":     time.Now().Add(24 * time.Hour).Unix(),
@@ -19,7 +29,7 @@ func GenerateToken(userID int64) (string, error) {
 }
 
 // JWT検証
-func ParseToken(tokenString string) (int64, error) {
+func ParseToken(tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, jwt.ErrSignatureInvalid
@@ -27,12 +37,12 @@ func ParseToken(tokenString string) (int64, error) {
 		return jwtSecret, nil
 	})
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		if uid, ok := claims["user_id"].(float64); ok {
-			return int64(uid), nil
+		if uid, ok := claims["user_id"].(string); ok {
+			return uid, nil
 		}
 	}
-	return 0, jwt.ErrTokenMalformed
+	return "", jwt.ErrTokenMalformed
 }

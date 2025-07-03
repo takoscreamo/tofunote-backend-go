@@ -3,6 +3,7 @@ package main
 import (
 	"feelog-backend/infra"
 	"feelog-backend/routes"
+	"feelog-backend/routes/middleware"
 
 	"feelog-backend/api/controllers"
 	"feelog-backend/repositories"
@@ -14,6 +15,7 @@ import (
 func main() {
 	infra.Initialize()
 	dbConn := infra.SetupDB()
+	middleware.SetAuthDB(dbConn)
 
 	diaryRepository := repositories.NewDiaryRepository(dbConn)
 	diaryUsecase := usecases.NewDiaryUsecase(diaryRepository)

@@ -24,15 +24,15 @@ func (m *mockDiaryUsecase) FindAll() (*[]diary.Diary, error) {
 	return m.diaries, m.err
 }
 
-func (m *mockDiaryUsecase) FindByUserID(userID int) (*[]diary.Diary, error) {
+func (m *mockDiaryUsecase) FindByUserID(userID string) (*[]diary.Diary, error) {
 	return m.diaries, m.err
 }
 
-func (m *mockDiaryUsecase) FindByUserIDAndDate(userID int, date string) (*diary.Diary, error) {
+func (m *mockDiaryUsecase) FindByUserIDAndDate(userID string, date string) (*diary.Diary, error) {
 	return m.diary, m.err
 }
 
-func (m *mockDiaryUsecase) FindByUserIDAndDateRange(userID int, startDate, endDate string) (*[]diary.Diary, error) {
+func (m *mockDiaryUsecase) FindByUserIDAndDateRange(userID string, startDate, endDate string) (*[]diary.Diary, error) {
 	return m.diaries, m.err
 }
 
@@ -40,11 +40,11 @@ func (m *mockDiaryUsecase) Create(diary *diary.Diary) error {
 	return m.err
 }
 
-func (m *mockDiaryUsecase) Update(userID int, date string, diary *diary.Diary) error {
+func (m *mockDiaryUsecase) Update(userID string, date string, diary *diary.Diary) error {
 	return m.err
 }
 
-func (m *mockDiaryUsecase) Delete(userID int, date string) error {
+func (m *mockDiaryUsecase) Delete(userID string, date string) error {
 	return m.err
 }
 
@@ -53,8 +53,8 @@ var testDiaries = func() []diary.Diary {
 	m5, _ := diary.NewMental(5)
 	m3, _ := diary.NewMental(3)
 	return []diary.Diary{
-		{ID: 1, UserID: 1, Date: "2025-01-01", Mental: m5, Diary: "良い日だった"},
-		{ID: 2, UserID: 1, Date: "2025-01-02", Mental: m3, Diary: "普通の日だった"},
+		{ID: "1", UserID: "1", Date: "2025-01-01", Mental: m5, Diary: "良い日だった"},
+		{ID: "2", UserID: "1", Date: "2025-01-02", Mental: m3, Diary: "普通の日だった"},
 	}
 }()
 
@@ -86,8 +86,8 @@ func TestDiaryController_FindAll(t *testing.T) {
 			},
 			expectedStatus: http.StatusOK,
 			expectedData: []DiaryResponseDTO{
-				{ID: 1, UserID: 1, Date: "2025-01-01", Mental: 5, Diary: "良い日だった"},
-				{ID: 2, UserID: 1, Date: "2025-01-02", Mental: 3, Diary: "普通の日だった"},
+				{ID: "1", UserID: "1", Date: "2025-01-01", Mental: 5, Diary: "良い日だった"},
+				{ID: "2", UserID: "1", Date: "2025-01-02", Mental: 3, Diary: "普通の日だった"},
 			},
 			expectedError: "",
 		},
@@ -173,7 +173,7 @@ func TestDiaryController_Create(t *testing.T) {
 				Diary:  "良い日だった",
 			},
 			expectedStatus: http.StatusCreated,
-			expectedData:   &DiaryResponseDTO{ID: 0, UserID: 1, Date: "2025-01-01", Mental: 5, Diary: "良い日だった"},
+			expectedData:   &DiaryResponseDTO{ID: "", UserID: "1", Date: "2025-01-01", Mental: 5, Diary: "良い日だった"},
 			expectedError:  "",
 		},
 		{
@@ -283,7 +283,7 @@ func TestDiaryController_Update(t *testing.T) {
 				Diary:  "更新された日記",
 			},
 			expectedStatus: http.StatusOK,
-			expectedData:   &DiaryResponseDTO{ID: 0, UserID: 1, Date: "2025-01-01", Mental: 7, Diary: "更新された日記"},
+			expectedData:   &DiaryResponseDTO{ID: "", UserID: "1", Date: "2025-01-01", Mental: 7, Diary: "更新された日記"},
 			expectedError:  "",
 		},
 		{
@@ -463,8 +463,8 @@ func TestDiaryController_FindByUserIDAndDate(t *testing.T) {
 			setupMock: func() *mockDiaryUsecase {
 				m5, _ := diary.NewMental(5)
 				testDiary := diary.Diary{
-					ID:     1,
-					UserID: 1,
+					ID:     "1",
+					UserID: "1",
 					Date:   "2025-01-01",
 					Mental: m5,
 					Diary:  "良い日だった",
@@ -476,7 +476,7 @@ func TestDiaryController_FindByUserIDAndDate(t *testing.T) {
 			},
 			date:           "2025-01-01",
 			expectedStatus: http.StatusOK,
-			expectedData:   &DiaryResponseDTO{ID: 1, UserID: 1, Date: "2025-01-01", Mental: 5, Diary: "良い日だった"},
+			expectedData:   &DiaryResponseDTO{ID: "1", UserID: "1", Date: "2025-01-01", Mental: 5, Diary: "良い日だった"},
 			expectedError:  "",
 		},
 		{
@@ -561,8 +561,8 @@ func TestDiaryController_FindByUserIDAndDateRange(t *testing.T) {
 			endDate:        "2025-01-31",
 			expectedStatus: http.StatusOK,
 			expectedData: []DiaryResponseDTO{
-				{ID: 1, UserID: 1, Date: "2025-01-01", Mental: 5, Diary: "良い日だった"},
-				{ID: 2, UserID: 1, Date: "2025-01-02", Mental: 3, Diary: "普通の日だった"},
+				{ID: "1", UserID: "1", Date: "2025-01-01", Mental: 5, Diary: "良い日だった"},
+				{ID: "2", UserID: "1", Date: "2025-01-02", Mental: 3, Diary: "普通の日だった"},
 			},
 			expectedError: "",
 		},

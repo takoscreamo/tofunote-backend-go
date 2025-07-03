@@ -6,6 +6,7 @@ import (
 	"feelog-backend/infra"
 	"feelog-backend/repositories"
 	"feelog-backend/routes"
+	"feelog-backend/routes/middleware"
 	"feelog-backend/usecases"
 	"log"
 	"os"
@@ -66,6 +67,7 @@ func initializeApp() {
 
 			log.Println("[DEBUG] Lambda initializeApp: infra.SetupDB() 開始")
 			db := infra.SetupDB()
+			middleware.SetAuthDB(db)
 			log.Println("[DEBUG] Lambda initializeApp: infra.SetupDB() 完了")
 
 			log.Println("[DEBUG] Lambda initializeApp: repositories.NewDiaryRepository 開始")

@@ -7,4 +7,6 @@ type Repository interface {
 	FindByEmail(email string) (*User, error)
 	FindByProviderId(provider, providerId string) (*User, error)
 	Create(user *User) error
+	FindByID(id string) (*User, error)
+	Update(user *User) error
 }
