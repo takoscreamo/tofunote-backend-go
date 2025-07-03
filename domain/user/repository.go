@@ -4,7 +4,6 @@ package user
 //go:generate mockgen -source=repository.go -destination=mock_repository.go -package=user
 
 type Repository interface {
-	FindByEmail(email string) (*User, error)
 	FindByProviderId(provider, providerId string) (*User, error)
 	Create(user *User) error
 	FindByID(id string) (*User, error)

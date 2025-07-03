@@ -19,7 +19,6 @@ type mockUserRepo struct {
 func (m *mockUserRepo) FindByID(id string) (*user.User, error) {
 	return m.userByID, nil
 }
-func (m *mockUserRepo) FindByEmail(email string) (*user.User, error) { return nil, nil }
 func (m *mockUserRepo) FindByProviderId(provider, providerId string) (*user.User, error) {
 	return nil, nil
 }
@@ -28,30 +27,63 @@ func (m *mockUserRepo) Update(u *user.User) error { return nil }
 
 func TestJWTAuthMiddleware_TableDriven(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	token, _ := infra.GenerateToken("00000000-0000-0000-0000-000000000042")
+
+	testUUID := uuid.New().String()
+	testToken, _ := infra.GenerateToken(testUUID)
 
 	tests := []struct {
 		name       string
 		header     string
+		mockUser   *user.User
 		wantStatus int
+		wantGuest  *bool // nilならisGuestチェックしない
 		comment    string
 	}{
-		{"正常系: 有効なトークン", "Bearer " + token, 200, "有効なJWTで認証通過"},
-		{"異常系: トークンなし", "", 401, "トークンなしで401"},
-		{"異常系: 無効なトークン", "Bearer invalidtoken", 401, "不正なトークンで401"},
+		{
+			name:       "有効なトークン(ゲスト)",
+			header:     "Bearer " + testToken,
+			mockUser:   &user.User{ID: testUUID, IsGuest: true},
+			wantStatus: 200,
+			wantGuest:  ptr(true),
+			comment:    "ゲストユーザーで認証通過",
+		},
+		{
+			name:       "有効なトークン(正式ユーザー)",
+			header:     "Bearer " + testToken,
+			mockUser:   &user.User{ID: testUUID, IsGuest: false},
+			wantStatus: 200,
+			wantGuest:  ptr(false),
+			comment:    "正式ユーザーで認証通過",
+		},
+		{
+			name:       "トークンなし",
+			header:     "",
+			mockUser:   nil,
+			wantStatus: 401,
+			wantGuest:  nil,
+			comment:    "トークンなしで401",
+		},
+		{
+			name:       "無効なトークン",
+			header:     "Bearer invalidtoken",
+			mockUser:   nil,
+			wantStatus: 401,
+			wantGuest:  nil,
+			comment:    "不正なトークンで401",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			SetAuthDB(nil)
+			userRepo = &mockUserRepo{userByID: tt.mockUser}
+
 			r := gin.New()
 			r.Use(JWTAuthMiddleware())
 			r.GET("/protected", func(c *gin.Context) {
-				userID, exists := c.Get("userID")
-				if !exists {
-					c.JSON(500, gin.H{"error": "userID not set"})
-					return
-				}
-				c.JSON(200, gin.H{"userID": userID})
+				userID, _ := c.Get("userID")
+				isGuest, _ := c.Get("isGuest")
+				c.JSON(200, gin.H{"userID": userID, "isGuest": isGuest})
 			})
 			w := httptest.NewRecorder()
 			req, _ := http.NewRequest("GET", "/protected", nil)
@@ -60,41 +92,17 @@ func TestJWTAuthMiddleware_TableDriven(t *testing.T) {
 			}
 			r.ServeHTTP(w, req)
 			assert.Equal(t, tt.wantStatus, w.Code, tt.comment)
+			if tt.wantGuest != nil && w.Code == 200 {
+				assert.Contains(t, w.Body.String(), "\"isGuest\":"+boolStr(*tt.wantGuest), tt.comment)
+			}
 		})
 	}
 }
 
-func TestJWTAuthMiddleware_GuestAndUser(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	// ゲストユーザー
-	guestID := uuid.New().String()
-	guestToken, _ := infra.GenerateToken(guestID)
-	SetAuthDB(nil)
-	userRepo = &mockUserRepo{userByID: &user.User{ID: guestID, IsGuest: true}}
-
-	r := gin.New()
-	r.Use(JWTAuthMiddleware())
-	r.GET("/protected", func(c *gin.Context) {
-		userID, _ := c.Get("userID")
-		isGuest, _ := c.Get("isGuest")
-		c.JSON(200, gin.H{"userID": userID, "isGuest": isGuest})
-	})
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/protected", nil)
-	req.Header.Set("Authorization", "Bearer "+guestToken)
-	r.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
-	assert.Contains(t, w.Body.String(), "true")
-
-	// 正式ユーザー
-	userID := uuid.New().String()
-	userToken, _ := infra.GenerateToken(userID)
-	userRepo = &mockUserRepo{userByID: &user.User{ID: userID, IsGuest: false}}
-
-	w2 := httptest.NewRecorder()
-	req2, _ := http.NewRequest("GET", "/protected", nil)
-	req2.Header.Set("Authorization", "Bearer "+userToken)
-	r.ServeHTTP(w2, req2)
-	assert.Equal(t, 200, w2.Code)
-	assert.Contains(t, w2.Body.String(), "false")
+func ptr(b bool) *bool { return &b }
+func boolStr(b bool) string {
+	if b {
+		return "true"
+	}
+	return "false"
 }

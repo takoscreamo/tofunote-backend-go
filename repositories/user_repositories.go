@@ -15,17 +15,6 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-func (r *UserRepository) FindByEmail(email string) (*user.User, error) {
-	var u user.User
-	if err := r.db.Where("email = ?", email).First(&u).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return &u, nil
-}
-
 func (r *UserRepository) FindByProviderId(provider, providerId string) (*user.User, error) {
 	var u user.User
 	if err := r.db.Where("provider = ? AND provider_id = ?", provider, providerId).First(&u).Error; err != nil {
