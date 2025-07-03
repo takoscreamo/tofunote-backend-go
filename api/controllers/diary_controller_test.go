@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"feelog-backend/domain/diary"
+	"feelog-backend/infra"
+	"feelog-backend/routes/middleware"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -64,8 +66,14 @@ type responseBody struct {
 	Error string      `json:"error,omitempty"`
 }
 
+func generateTestToken() string {
+	token, _ := infra.GenerateToken("1")
+	return token
+}
+
 func TestDiaryController_FindAll(t *testing.T) {
 	gin.SetMode(gin.TestMode)
+	token := generateTestToken()
 
 	tests := []struct {
 		name           string
@@ -124,9 +132,11 @@ func TestDiaryController_FindAll(t *testing.T) {
 			controller := NewDiaryController(mock)
 
 			router := gin.New()
+			router.Use(middleware.JWTAuthMiddleware())
 			router.GET("/api/me/diaries", controller.FindAll)
 
 			req, _ := http.NewRequest("GET", "/api/me/diaries", nil)
+			req.Header.Set("Authorization", "Bearer "+token)
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 
@@ -151,6 +161,7 @@ func TestDiaryController_FindAll(t *testing.T) {
 
 func TestDiaryController_Create(t *testing.T) {
 	gin.SetMode(gin.TestMode)
+	token := generateTestToken()
 
 	tests := []struct {
 		name           string
@@ -232,11 +243,13 @@ func TestDiaryController_Create(t *testing.T) {
 			controller := NewDiaryController(mock)
 
 			router := gin.New()
+			router.Use(middleware.JWTAuthMiddleware())
 			router.POST("/api/me/diaries", controller.Create)
 
 			jsonData, _ := json.Marshal(tt.requestBody)
 			req, _ := http.NewRequest("POST", "/api/me/diaries", bytes.NewBuffer(jsonData))
 			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 
@@ -260,6 +273,7 @@ func TestDiaryController_Create(t *testing.T) {
 
 func TestDiaryController_Update(t *testing.T) {
 	gin.SetMode(gin.TestMode)
+	token := generateTestToken()
 
 	tests := []struct {
 		name           string
@@ -342,11 +356,13 @@ func TestDiaryController_Update(t *testing.T) {
 			controller := NewDiaryController(mock)
 
 			router := gin.New()
+			router.Use(middleware.JWTAuthMiddleware())
 			router.PUT("/api/me/diaries/:date", controller.Update)
 
 			jsonData, _ := json.Marshal(tt.requestBody)
 			req, _ := http.NewRequest("PUT", "/api/me/diaries/"+tt.date, bytes.NewBuffer(jsonData))
 			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 
@@ -370,6 +386,7 @@ func TestDiaryController_Update(t *testing.T) {
 
 func TestDiaryController_Delete(t *testing.T) {
 	gin.SetMode(gin.TestMode)
+	token := generateTestToken()
 
 	tests := []struct {
 		name            string
@@ -423,9 +440,11 @@ func TestDiaryController_Delete(t *testing.T) {
 			controller := NewDiaryController(mock)
 
 			router := gin.New()
+			router.Use(middleware.JWTAuthMiddleware())
 			router.DELETE("/api/me/diaries/:date", controller.Delete)
 
 			req, _ := http.NewRequest("DELETE", "/api/me/diaries/"+tt.date, nil)
+			req.Header.Set("Authorization", "Bearer "+token)
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 
@@ -449,6 +468,7 @@ func TestDiaryController_Delete(t *testing.T) {
 
 func TestDiaryController_FindByUserIDAndDate(t *testing.T) {
 	gin.SetMode(gin.TestMode)
+	token := generateTestToken()
 
 	tests := []struct {
 		name           string
@@ -511,9 +531,11 @@ func TestDiaryController_FindByUserIDAndDate(t *testing.T) {
 			controller := NewDiaryController(mock)
 
 			router := gin.New()
+			router.Use(middleware.JWTAuthMiddleware())
 			router.GET("/api/me/diaries/:date", controller.FindByUserIDAndDate)
 
 			req, _ := http.NewRequest("GET", "/api/me/diaries/"+tt.date, nil)
+			req.Header.Set("Authorization", "Bearer "+token)
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 
@@ -537,6 +559,7 @@ func TestDiaryController_FindByUserIDAndDate(t *testing.T) {
 
 func TestDiaryController_FindByUserIDAndDateRange(t *testing.T) {
 	gin.SetMode(gin.TestMode)
+	token := generateTestToken()
 
 	tests := []struct {
 		name           string
@@ -616,6 +639,7 @@ func TestDiaryController_FindByUserIDAndDateRange(t *testing.T) {
 			controller := NewDiaryController(mock)
 
 			router := gin.New()
+			router.Use(middleware.JWTAuthMiddleware())
 			router.GET("/api/me/diaries/range", controller.FindByUserIDAndDateRange)
 
 			url := "/api/me/diaries/range"
@@ -631,6 +655,7 @@ func TestDiaryController_FindByUserIDAndDateRange(t *testing.T) {
 			}
 
 			req, _ := http.NewRequest("GET", url, nil)
+			req.Header.Set("Authorization", "Bearer "+token)
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 
