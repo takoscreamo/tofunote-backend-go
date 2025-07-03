@@ -22,8 +22,9 @@ func (m *mockUserRepo) FindByID(id string) (*user.User, error) {
 func (m *mockUserRepo) FindByProviderId(provider, providerId string) (*user.User, error) {
 	return nil, nil
 }
-func (m *mockUserRepo) Create(u *user.User) error { return nil }
-func (m *mockUserRepo) Update(u *user.User) error { return nil }
+func (m *mockUserRepo) Create(u *user.User) error                                  { return nil }
+func (m *mockUserRepo) Update(u *user.User) error                                  { return nil }
+func (m *mockUserRepo) FindByRefreshToken(refreshToken string) (*user.User, error) { return nil, nil }
 
 func TestJWTAuthMiddleware_TableDriven(t *testing.T) {
 	gin.SetMode(gin.TestMode)

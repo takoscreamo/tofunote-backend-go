@@ -248,20 +248,7 @@ paths:
   /guest-login:
     post:
       summary: ゲストログイン
-      description: UUIDを受け取り、ゲストユーザーとしてJWTトークンを発行する
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                id:
-                  type: string
-                  format: uuid
-                  description: ユーザーUUID
-              required:
-                - id
+      description: サーバー側でUUIDとリフレッシュトークンを生成し、ゲストユーザーとしてJWTトークンを発行する
       responses:
         '200':
           description: ゲストトークン発行成功
@@ -272,6 +259,50 @@ paths:
                 properties:
                   token:
                     type: string
+                  refresh_token:
+                    type: string
+                  id:
+                    type: string
+                    format: uuid
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /refresh-token:
+    post:
+      summary: JWTリフレッシュ
+      description: リフレッシュトークンを使って新しいJWTを発行する
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+                  description: リフレッシュトークン
+              required:
+                - refresh_token
+      responses:
+        '200':
+          description: 新しいJWT発行成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '401':
+          description: リフレッシュトークン無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: サーバーエラー
           content:

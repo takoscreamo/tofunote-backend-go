@@ -1,8 +1,7 @@
 package controllers
 
 import (
-	"bytes"
-	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -15,55 +14,89 @@ import (
 
 type mockUserRepo struct {
 	createdUser *user.User
-	findByID    *user.User
+	errCreate   error
 }
 
-func (m *mockUserRepo) FindByID(id string) (*user.User, error) {
-	return m.findByID, nil
-}
+func (m *mockUserRepo) FindByID(id string) (*user.User, error) { return nil, nil }
 func (m *mockUserRepo) Create(u *user.User) error {
+	if m.errCreate != nil {
+		return m.errCreate
+	}
 	m.createdUser = u
 	return nil
 }
 func (m *mockUserRepo) FindByProviderId(provider, providerId string) (*user.User, error) {
 	return nil, nil
 }
-func (m *mockUserRepo) Update(u *user.User) error { return nil }
+func (m *mockUserRepo) FindByRefreshToken(refreshToken string) (*user.User, error) { return nil, nil }
+func (m *mockUserRepo) Update(u *user.User) error                                  { return nil }
 
-func TestGuestLogin_NewUser(t *testing.T) {
+func TestGuestLogin_TableDriven(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	repo := &mockUserRepo{}
-	uc := NewUserController(repo)
-	r := gin.New()
-	r.POST("/api/guest-login", uc.GuestLogin)
 
-	uuid := "b3b1a2e0-4b5c-4e2a-8c2e-1b2c3d4e5f60"
-	body := map[string]string{"id": uuid}
-	b, _ := json.Marshal(body)
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/api/guest-login", bytes.NewReader(b))
-	r.ServeHTTP(w, req)
+	tests := []struct {
+		name         string
+		repo         *mockUserRepo
+		mockTokenErr bool
+		wantStatus   int
+		wantUser     bool
+		wantBody     string
+	}{
+		{
+			name:       "正常系: 新規ゲスト作成",
+			repo:       &mockUserRepo{},
+			wantStatus: http.StatusOK,
+			wantUser:   true,
+			wantBody:   "token",
+		},
+		{
+			name:       "異常系: Create失敗",
+			repo:       &mockUserRepo{errCreate: errors.New("fail")},
+			wantStatus: http.StatusInternalServerError,
+			wantUser:   false,
+			wantBody:   "ユーザー作成に失敗しました",
+		},
+		{
+			name:         "異常系: トークン生成失敗",
+			repo:         &mockUserRepo{},
+			mockTokenErr: true,
+			wantStatus:   http.StatusInternalServerError,
+			wantUser:     true,
+			wantBody:     "トークン生成に失敗しました",
+		},
+	}
 
-	assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
-	assert.NotNil(t, repo.createdUser)
-	assert.Equal(t, uuid, repo.createdUser.ID)
-}
+	origGenerateToken := generateTokenForTest
+	defer func() { generateTokenForTest = origGenerateToken }()
 
-func TestGuestLogin_ExistingUser(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	uuid := "b3b1a2e0-4b5c-4e2a-8c2e-1b2c3d4e5f60"
-	existing := &user.User{ID: uuid, IsGuest: true}
-	repo := &mockUserRepo{findByID: existing}
-	uc := NewUserController(repo)
-	r := gin.New()
-	r.POST("/api/guest-login", uc.GuestLogin)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			generateTokenForTest = func(id string) (string, error) {
+				if tt.mockTokenErr {
+					return "", errors.New("fail")
+				}
+				return "dummy-token", nil
+			}
 
-	body := map[string]string{"id": existing.ID}
-	b, _ := json.Marshal(body)
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/api/guest-login", bytes.NewReader(b))
-	r.ServeHTTP(w, req)
+			uc := NewUserController(tt.repo)
+			r := gin.New()
+			r.POST("/api/guest-login", func(c *gin.Context) {
+				uc.GuestLogin(c)
+			})
 
-	assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
-	assert.Nil(t, repo.createdUser) // 新規作成されない
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("POST", "/api/guest-login", nil)
+			r.ServeHTTP(w, req)
+
+			assert.Equal(t, tt.wantStatus, w.Code, w.Body.String())
+			if tt.wantUser {
+				assert.NotNil(t, tt.repo.createdUser)
+				assert.NotEmpty(t, tt.repo.createdUser.ID)
+				assert.True(t, tt.repo.createdUser.IsGuest)
+			} else {
+				assert.Nil(t, tt.repo.createdUser)
+			}
+			assert.Contains(t, w.Body.String(), tt.wantBody)
+		})
+	}
 }

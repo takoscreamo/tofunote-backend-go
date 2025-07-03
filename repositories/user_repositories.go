@@ -37,6 +37,17 @@ func (r *UserRepository) FindByID(id string) (*user.User, error) {
 	return &u, nil
 }
 
+func (r *UserRepository) FindByRefreshToken(refreshToken string) (*user.User, error) {
+	var u user.User
+	if err := r.db.Where("refresh_token = ?", refreshToken).First(&u).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &u, nil
+}
+
 func (r *UserRepository) Update(u *user.User) error {
 	return r.db.Save(u).Error
 }

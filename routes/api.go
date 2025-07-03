@@ -59,6 +59,7 @@ func SetupAPIEndpoints(router *gin.Engine, diaryController *controllers.DiaryCon
 	api := router.Group("/api")
 	{
 		api.POST("/guest-login", userController.GuestLogin)
+		api.POST("/refresh-token", userController.RefreshToken)
 
 		// 認証が必要なグループ
 		auth := api.Group("")
