@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"log"
 	"os"
 	"strings"
 
@@ -12,20 +11,6 @@ import (
 // SetupCORS CORS設定を設定
 func SetupCORS(router *gin.Engine) {
 	corsOrigin := os.Getenv("CORS_ORIGIN")
-
-	log.Println("[DEBUG] CORS_ORIGIN: ", corsOrigin)
-
-	if corsOrigin == "" {
-		// 本番環境なら本番フロントのURLをデフォルトに
-		if os.Getenv("ENV") == "prod" {
-			corsOrigin = "https://feelog.takoscreamo.com"
-		} else {
-			corsOrigin = "http://localhost:3000"
-		}
-	}
-
-	// ログ出力
-	log.Println("[DEBUG] CORS_ORIGIN: ", corsOrigin)
 
 	// カンマ区切りで複数のオリジンを分割
 	origins := strings.Split(corsOrigin, ",")
