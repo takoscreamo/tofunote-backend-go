@@ -59,6 +59,7 @@ func (c *UserController) GuestLogin(ctx *gin.Context) {
 	}
 	u := &user.User{
 		ID:           newUUID,
+		Nickname:     "ゲスト",
 		IsGuest:      true,
 		RefreshToken: refreshToken,
 	}

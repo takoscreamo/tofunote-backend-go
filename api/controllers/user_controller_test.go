@@ -96,6 +96,7 @@ func TestGuestLogin_TableDriven(t *testing.T) {
 				assert.NotNil(t, tt.repo.createdUser)
 				assert.NotEmpty(t, tt.repo.createdUser.ID)
 				assert.True(t, tt.repo.createdUser.IsGuest)
+				assert.Equal(t, "ゲスト", tt.repo.createdUser.Nickname)
 			} else {
 				assert.Nil(t, tt.repo.createdUser)
 			}
