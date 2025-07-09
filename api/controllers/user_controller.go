@@ -115,3 +115,73 @@ func (c *UserController) DeleteMe(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, gin.H{"message": "ユーザーと日記データを全て削除しました"})
 }
+
+// GET /me: ユーザー情報取得API
+func (c *UserController) GetMe(ctx *gin.Context) {
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "認証情報が見つかりません"})
+		return
+	}
+	userIDStr, ok := userID.(string)
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザーIDの形式が不正です"})
+		return
+	}
+	u, err := c.repo.FindByID(userIDStr)
+	if err != nil || u == nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザーが見つかりません"})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"id":       u.ID,
+		"nickname": u.Nickname,
+		// 必要に応じて他の項目も追加
+	})
+}
+
+// PATCH /me: ユーザー情報部分更新API
+func (c *UserController) PatchMe(ctx *gin.Context) {
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "認証情報が見つかりません"})
+		return
+	}
+	userIDStr, ok := userID.(string)
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザーIDの形式が不正です"})
+		return
+	}
+	u, err := c.repo.FindByID(userIDStr)
+	if err != nil || u == nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザーが見つかりません"})
+		return
+	}
+	var req map[string]interface{}
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "無効なリクエストデータです"})
+		return
+	}
+	updated := false
+	if nickname, ok := req["nickname"].(string); ok {
+		u.Nickname = nickname
+		updated = true
+	}
+	// 他の項目もここで追加可能
+	if !updated {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "更新可能な項目がありません"})
+		return
+	}
+	if err := c.repo.Update(u); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザー情報の更新に失敗しました"})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "ユーザー情報を更新しました",
+		"user": gin.H{
+			"id":       u.ID,
+			"nickname": u.Nickname,
+			// 必要に応じて他の項目も追加
+		},
+	})
+}

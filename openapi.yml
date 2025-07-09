@@ -246,12 +246,42 @@ paths:
                 $ref: '#/components/schemas/Error'
 
   /me:
-    delete:
-      summary: ユーザー自身の全データ削除
-      description: 現在のユーザーとそのユーザーの全ての日記データを削除します。この操作は取り消しできません。
+    get:
+      summary: ユーザー情報取得
+      description: 現在のユーザーの情報を取得します
       responses:
         '200':
-          description: 削除成功
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  nickname:
+                    type: string
+        '401':
+          description: 認証情報が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      summary: ユーザー情報部分更新
+      description: 現在のユーザーの情報を部分的に更新します
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nickname:
+                  type: string
+      responses:
+        '200':
+          description: 更新成功
           content:
             application/json:
               schema:
@@ -259,8 +289,20 @@ paths:
                 properties:
                   message:
                     type: string
-                    description: 成功メッセージ
-                    example: "ユーザーと日記データを全て削除しました"
+                    example: ユーザー情報を更新しました
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      nickname:
+                        type: string
+        '400':
+          description: リクエストが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: 認証情報が見つかりません
           content:
