@@ -4,6 +4,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,31 +17,17 @@ func SetupCORS(router *gin.Engine) {
 
 	// カンマ区切りで複数のオリジンを分割
 	origins := strings.Split(corsOrigin, ",")
+	// 空白を除去
 	for i, origin := range origins {
 		origins[i] = strings.TrimSpace(origin)
 	}
 
-	router.Use(func(c *gin.Context) {
-		origin := c.Request.Header.Get("Origin")
-		allowOrigin := ""
-		for _, o := range origins {
-			if o == origin {
-				allowOrigin = origin
-				break
-			}
-		}
-		if allowOrigin != "" {
-			c.Writer.Header().Set("Access-Control-Allow-Origin", allowOrigin)
-			c.Writer.Header().Set("Vary", "Origin")
-		}
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Length")
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
-		}
-		c.Next()
-	})
+	// CORS設定を追加
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     origins,
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
 }
