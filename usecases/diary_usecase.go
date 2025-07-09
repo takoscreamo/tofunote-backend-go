@@ -13,6 +13,7 @@ type IDiaryUsecase interface {
 	Create(diary *diary.Diary) error
 	Update(userID string, date string, diary *diary.Diary) error
 	Delete(userID string, date string) error
+	DeleteByUserID(userID string) error
 }
 
 type DiaryUsecase struct {
@@ -49,4 +50,8 @@ func (s *DiaryUsecase) Update(userID string, date string, diary *diary.Diary) er
 
 func (s *DiaryUsecase) Delete(userID string, date string) error {
 	return s.repository.Delete(userID, date)
+}
+
+func (s *DiaryUsecase) DeleteByUserID(userID string) error {
+	return s.repository.DeleteByUserID(userID)
 }

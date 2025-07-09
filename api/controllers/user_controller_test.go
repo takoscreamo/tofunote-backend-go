@@ -30,6 +30,9 @@ func (m *mockUserRepo) FindByProviderId(provider, providerId string) (*user.User
 }
 func (m *mockUserRepo) FindByRefreshToken(refreshToken string) (*user.User, error) { return nil, nil }
 func (m *mockUserRepo) Update(u *user.User) error                                  { return nil }
+func (m *mockUserRepo) DeleteByID(id string) error {
+	return nil
+}
 
 func TestGuestLogin_TableDriven(t *testing.T) {
 	gin.SetMode(gin.TestMode)
@@ -78,7 +81,7 @@ func TestGuestLogin_TableDriven(t *testing.T) {
 				return "dummy-token", nil
 			}
 
-			uc := NewUserController(tt.repo)
+			uc := NewUserController(tt.repo, nil) // withdrawUsecaseは不要なためnilでOK
 			r := gin.New()
 			r.POST("/api/guest-login", func(c *gin.Context) {
 				uc.GuestLogin(c)

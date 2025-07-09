@@ -71,5 +71,6 @@ func SetupAPIEndpoints(router *gin.Engine, diaryController *controllers.DiaryCon
 		auth.PUT("/me/diaries/:date", diaryController.Update)
 		auth.DELETE("/me/diaries/:date", diaryController.Delete)
 		auth.GET("/me/analyze-diaries", diaryAnalysisController.AnalyzeAllDiariesHandler)
+		auth.DELETE("/me", userController.DeleteMe)
 	}
 }

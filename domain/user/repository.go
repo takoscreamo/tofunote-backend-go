@@ -9,4 +9,5 @@ type Repository interface {
 	Create(user *User) error
 	FindByID(id string) (*User, error)
 	Update(user *User) error
+	DeleteByID(id string) error
 }

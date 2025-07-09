@@ -50,6 +50,10 @@ func (m *mockDiaryUsecase) Delete(userID string, date string) error {
 	return m.err
 }
 
+func (m *mockDiaryUsecase) DeleteByUserID(userID string) error {
+	return nil
+}
+
 // testDiaries はテスト用のダイアリーデータを定義します
 var testDiaries = func() []diary.Diary {
 	m5, _ := diary.NewMental(5)

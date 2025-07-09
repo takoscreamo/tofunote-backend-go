@@ -245,6 +245,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /me:
+    delete:
+      summary: ユーザー自身の全データ削除
+      description: 現在のユーザーとそのユーザーの全ての日記データを削除します。この操作は取り消しできません。
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: 成功メッセージ
+                    example: "ユーザーと日記データを全て削除しました"
+        '401':
+          description: 認証情報が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /guest-login:
     post:
       summary: ゲストログイン

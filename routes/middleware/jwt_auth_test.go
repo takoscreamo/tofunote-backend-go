@@ -25,6 +25,9 @@ func (m *mockUserRepo) FindByProviderId(provider, providerId string) (*user.User
 func (m *mockUserRepo) Create(u *user.User) error                                  { return nil }
 func (m *mockUserRepo) Update(u *user.User) error                                  { return nil }
 func (m *mockUserRepo) FindByRefreshToken(refreshToken string) (*user.User, error) { return nil, nil }
+func (m *mockUserRepo) DeleteByID(id string) error {
+	return nil
+}
 
 func TestJWTAuthMiddleware_TableDriven(t *testing.T) {
 	gin.SetMode(gin.TestMode)

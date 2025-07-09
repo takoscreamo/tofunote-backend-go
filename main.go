@@ -115,7 +115,8 @@ func initializeApp() {
 
 			log.Println("[DEBUG] Lambda initializeApp: routes.SetupAPIEndpoints 開始")
 			userRepo := repositories.NewUserRepository(db)
-			userController := controllers.NewUserController(userRepo)
+			withdrawUsecase := usecases.NewUserWithdrawUsecase(userRepo, diaryRepository)
+			userController := controllers.NewUserController(userRepo, withdrawUsecase)
 			routes.SetupAPIEndpoints(router, diaryController, diaryAnalysisController, userController)
 			log.Println("[DEBUG] Lambda initializeApp: routes.SetupAPIEndpoints 完了")
 

@@ -17,6 +17,7 @@ type IDiaryRepository interface {
 	Create(diary *diary.Diary) error
 	Update(userID string, date string, diary *diary.Diary) error
 	Delete(userID string, date string) error
+	DeleteByUserID(userID string) error // 追加
 	// FindByID(diaryId int) (*models.Diary, error)
 }
 
@@ -110,6 +111,15 @@ func (r *DiaryRepository) Delete(userID string, date string) error {
 	}
 	if result.RowsAffected == 0 {
 		return errors.New("指定された日付の日記が見つかりません")
+	}
+	return nil
+}
+
+// 指定ユーザーの全日記を削除
+func (r *DiaryRepository) DeleteByUserID(userID string) error {
+	result := r.db.Unscoped().Where("user_id = ?", userID).Delete(&db.DiaryModel{})
+	if result.Error != nil {
+		return result.Error
 	}
 	return nil
 }

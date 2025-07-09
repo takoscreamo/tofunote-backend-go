@@ -59,4 +59,8 @@ func (r *UserRepository) Create(u *user.User) error {
 	return r.db.Create(u).Error
 }
 
+func (r *UserRepository) DeleteByID(id string) error {
+	return r.db.Unscoped().Where("id = ?", id).Delete(&user.User{}).Error
+}
+
 var _ user.Repository = (*UserRepository)(nil)

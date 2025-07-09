@@ -25,7 +25,8 @@ func main() {
 	diaryAnalysisController := controllers.NewDiaryAnalysisController(diaryAnalysisUsecase)
 
 	userRepo := repositories.NewUserRepository(dbConn)
-	userController := controllers.NewUserController(userRepo)
+	withdrawUsecase := usecases.NewUserWithdrawUsecase(userRepo, diaryRepository)
+	userController := controllers.NewUserController(userRepo, withdrawUsecase)
 
 	router := gin.Default()
 

@@ -167,8 +167,8 @@ feelog-backend-go/
 
 
 ## TODO
-- デバッグ
 - ロギング
 - pgadmin
+- リフレッシュトークンに有効期限追加
 
 ---
