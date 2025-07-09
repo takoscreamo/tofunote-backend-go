@@ -12,7 +12,12 @@ import (
 func SetupCORS(router *gin.Engine) {
 	corsOrigin := os.Getenv("CORS_ORIGIN")
 	if corsOrigin == "" {
-		corsOrigin = "http://localhost:3000" // デフォルト
+		// 本番環境なら本番フロントのURLをデフォルトに
+		if os.Getenv("ENV") == "prod" {
+			corsOrigin = "https://feelog.takoscreamo.com"
+		} else {
+			corsOrigin = "http://localhost:3000"
+		}
 	}
 
 	// カンマ区切りで複数のオリジンを分割
