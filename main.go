@@ -93,6 +93,14 @@ func initializeApp() {
 			log.Println("[DEBUG] Lambda initializeApp: gin.Default() 開始")
 			router := gin.Default()
 
+			// CORSミドルウェアを一番最初に登録
+			routes.SetupCORS(router)
+
+			// 全OPTIONSリクエストに200を返すハンドラを追加
+			router.OPTIONS("/*path", func(c *gin.Context) {
+				c.Status(200)
+			})
+
 			// カスタムログミドルウェアを追加
 			router.Use(func(c *gin.Context) {
 				log.Printf("[DEBUG] Gin: %s %s", c.Request.Method, c.Request.URL.Path)
