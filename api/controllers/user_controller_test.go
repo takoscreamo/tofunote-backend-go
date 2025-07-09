@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"feelog-backend/domain/user"
@@ -13,11 +14,18 @@ import (
 )
 
 type mockUserRepo struct {
-	createdUser *user.User
-	errCreate   error
+	createdUser  *user.User
+	errCreate    error
+	FindByIDFunc func(id string) (*user.User, error)
+	UpdateFunc   func(u *user.User) error
 }
 
-func (m *mockUserRepo) FindByID(id string) (*user.User, error) { return nil, nil }
+func (m *mockUserRepo) FindByID(id string) (*user.User, error) {
+	if m.FindByIDFunc != nil {
+		return m.FindByIDFunc(id)
+	}
+	return nil, nil
+}
 func (m *mockUserRepo) Create(u *user.User) error {
 	if m.errCreate != nil {
 		return m.errCreate
@@ -29,9 +37,18 @@ func (m *mockUserRepo) FindByProviderId(provider, providerId string) (*user.User
 	return nil, nil
 }
 func (m *mockUserRepo) FindByRefreshToken(refreshToken string) (*user.User, error) { return nil, nil }
-func (m *mockUserRepo) Update(u *user.User) error                                  { return nil }
+func (m *mockUserRepo) Update(u *user.User) error {
+	if m.UpdateFunc != nil {
+		return m.UpdateFunc(u)
+	}
+	return nil
+}
 func (m *mockUserRepo) DeleteByID(id string) error {
 	return nil
+}
+
+func (m *mockUserRepo) setUser(u *user.User) {
+	m.createdUser = u
 }
 
 func TestGuestLogin_TableDriven(t *testing.T) {
@@ -101,6 +118,178 @@ func TestGuestLogin_TableDriven(t *testing.T) {
 				assert.Nil(t, tt.repo.createdUser)
 			}
 			assert.Contains(t, w.Body.String(), tt.wantBody)
+		})
+	}
+}
+
+func TestGetMe_TableDriven(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	type fields struct {
+		findByIDFunc func(id string) (*user.User, error)
+	}
+
+	tests := []struct {
+		name       string
+		fields     fields
+		userID     interface{}
+		wantStatus int
+		wantBody   string
+	}{
+		{
+			name: "正常系: ユーザー情報取得",
+			fields: fields{
+				findByIDFunc: func(id string) (*user.User, error) {
+					return &user.User{ID: id, Nickname: "テスト太郎"}, nil
+				},
+			},
+			userID:     "test-id",
+			wantStatus: http.StatusOK,
+			wantBody:   "テスト太郎",
+		},
+		{
+			name:       "異常系: 認証情報なし",
+			fields:     fields{},
+			userID:     nil,
+			wantStatus: http.StatusUnauthorized,
+			wantBody:   "認証情報が見つかりません",
+		},
+		{
+			name: "異常系: ユーザー未発見",
+			fields: fields{
+				findByIDFunc: func(id string) (*user.User, error) {
+					return nil, nil
+				},
+			},
+			userID:     "notfound",
+			wantStatus: http.StatusInternalServerError,
+			wantBody:   "ユーザーが見つかりません",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := &mockUserRepo{FindByIDFunc: tt.fields.findByIDFunc}
+			uc := NewUserController(mockRepo, nil)
+			r := gin.New()
+			r.GET("/api/me", func(c *gin.Context) {
+				if tt.userID != nil {
+					c.Set("userID", tt.userID)
+				}
+				uc.GetMe(c)
+			})
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("GET", "/api/me", nil)
+			r.ServeHTTP(w, req)
+			assert.Equal(t, tt.wantStatus, w.Code)
+			assert.Contains(t, w.Body.String(), tt.wantBody)
+		})
+	}
+}
+
+func TestPatchMe_TableDriven(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	type fields struct {
+		findByIDFunc func(id string) (*user.User, error)
+		updateFunc   func(u *user.User) error
+	}
+
+	tests := []struct {
+		name       string
+		fields     fields
+		userID     interface{}
+		body       string
+		wantStatus int
+		wantBody   string
+		wantNick   string
+	}{
+		{
+			name: "正常系: ニックネーム更新",
+			fields: fields{
+				findByIDFunc: func(id string) (*user.User, error) {
+					return &user.User{ID: id, Nickname: "旧名"}, nil
+				},
+				updateFunc: func(u *user.User) error {
+					return nil
+				},
+			},
+			userID:     "test-id",
+			body:       `{"nickname": "新しい名"}`,
+			wantStatus: http.StatusOK,
+			wantBody:   "新しい名",
+			wantNick:   "新しい名",
+		},
+		{
+			name:       "異常系: 認証情報なし",
+			fields:     fields{},
+			userID:     nil,
+			body:       `{"nickname": "新しい名"}`,
+			wantStatus: http.StatusUnauthorized,
+			wantBody:   "認証情報が見つかりません",
+		},
+		{
+			name: "異常系: ユーザー未発見",
+			fields: fields{
+				findByIDFunc: func(id string) (*user.User, error) {
+					return nil, nil
+				},
+			},
+			userID:     "notfound",
+			body:       `{"nickname": "新しい名"}`,
+			wantStatus: http.StatusInternalServerError,
+			wantBody:   "ユーザーが見つかりません",
+		},
+		{
+			name: "異常系: バリデーションエラー（空ボディ）",
+			fields: fields{
+				findByIDFunc: func(id string) (*user.User, error) {
+					return &user.User{ID: id, Nickname: "旧名"}, nil
+				},
+			},
+			userID:     "test-id",
+			body:       ``,
+			wantStatus: http.StatusBadRequest,
+			wantBody:   "無効なリクエストデータです",
+		},
+		{
+			name: "異常系: 更新可能な項目なし",
+			fields: fields{
+				findByIDFunc: func(id string) (*user.User, error) {
+					return &user.User{ID: id, Nickname: "旧名"}, nil
+				},
+			},
+			userID:     "test-id",
+			body:       `{"not_exist": "xxx"}`,
+			wantStatus: http.StatusBadRequest,
+			wantBody:   "更新可能な項目がありません",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := &mockUserRepo{
+				FindByIDFunc: tt.fields.findByIDFunc,
+				UpdateFunc:   tt.fields.updateFunc,
+			}
+			uc := NewUserController(mockRepo, nil)
+			r := gin.New()
+			r.PATCH("/api/me", func(c *gin.Context) {
+				if tt.userID != nil {
+					c.Set("userID", tt.userID)
+				}
+				uc.PatchMe(c)
+			})
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("PATCH", "/api/me", strings.NewReader(tt.body))
+			req.Header.Set("Content-Type", "application/json")
+			r.ServeHTTP(w, req)
+			assert.Equal(t, tt.wantStatus, w.Code)
+			assert.Contains(t, w.Body.String(), tt.wantBody)
+			if tt.wantNick != "" && tt.wantStatus == http.StatusOK {
+				// レスポンスのnicknameが正しいか確認
+				assert.Contains(t, w.Body.String(), tt.wantNick)
+			}
 		})
 	}
 }
