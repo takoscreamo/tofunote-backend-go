@@ -11,14 +11,6 @@ import (
 // SetupCORS CORS設定を設定
 func SetupCORS(router *gin.Engine) {
 	corsOrigin := os.Getenv("CORS_ORIGIN")
-	if corsOrigin == "" {
-		// 本番環境なら本番フロントのURLをデフォルトに
-		if os.Getenv("ENV") == "prod" {
-			corsOrigin = "https://feelog.takoscreamo.com"
-		} else {
-			corsOrigin = "http://localhost:3000"
-		}
-	}
 
 	// カンマ区切りで複数のオリジンを分割
 	origins := strings.Split(corsOrigin, ",")
