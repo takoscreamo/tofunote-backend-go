@@ -1,11 +1,11 @@
 package infra
 
 import (
-	"feelog-backend/infra/db"
 	"fmt"
 	"log"
 	"os"
 	"time"
+	"tofunote-backend/infra/db"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -25,7 +25,7 @@ func SetupDB() *gorm.DB {
 	dbHost := getEnvOrDefault("DB_HOST", "localhost")
 	dbUser := getEnvOrDefault("DB_USER", "ginuser")
 	dbPassword := getEnvOrDefault("DB_PASSWORD", "ginpassword")
-	dbName := getEnvOrDefault("DB_NAME", "feelog")
+	dbName := getEnvOrDefault("DB_NAME", "tofunote")
 	dbPort := getEnvOrDefault("DB_PORT", "5432")
 
 	// 環境に応じてSSL設定を変更

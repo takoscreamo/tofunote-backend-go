@@ -3,11 +3,11 @@ package controllers
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"feelog-backend/domain/user"
-	"feelog-backend/infra"
 	"net/http"
+	"tofunote-backend/domain/user"
+	"tofunote-backend/infra"
 
-	"feelog-backend/usecases"
+	"tofunote-backend/usecases"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

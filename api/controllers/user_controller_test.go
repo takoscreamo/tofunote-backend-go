@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"feelog-backend/domain/user"
+	"tofunote-backend/domain/user"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"

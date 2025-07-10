@@ -1,8 +1,8 @@
 package usecases
 
 import (
-	"feelog-backend/domain/diary"
-	"feelog-backend/repositories"
+	"tofunote-backend/domain/diary"
+	"tofunote-backend/repositories"
 )
 
 type IDiaryUsecase interface {

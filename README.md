@@ -1,4 +1,4 @@
-# Feelog Backend
+# Tofunote Backend
 
 メンタルヘルスのための感情トラッキングアプリケーションのバックエンド（Go + Gin）
 
@@ -34,7 +34,7 @@
 ```bash
 # リポジトリをクローン
 git clone <repository-url>
-cd feelog-backend-go
+cd tofunote-backend-go
 
 # 環境変数ファイルを作成
 cp .env.example .env
@@ -78,9 +78,9 @@ air
 
 ```bash
 # マイグレーション実行（db接続情報は要変更）
-migrate -path ./infra/migrations -database "postgres://ginuser:ginpassword@localhost:5432/feelog?sslmode=disable" up
+migrate -path ./infra/migrations -database "postgres://ginuser:ginpassword@localhost:5432/tofunote?sslmode=disable" up
 # ロールバック
-migrate -path ./infra/migrations -database "postgres://ginuser:ginpassword@localhost:5432/feelog?sslmode=disable" down
+migrate -path ./infra/migrations -database "postgres://ginuser:ginpassword@localhost:5432/tofunote?sslmode=disable" down
 ```
 - usersテーブル追加後は必ずマイグレーションを実行
 - エラー時は`Dirty database version`等をforceコマンドで復旧
@@ -142,7 +142,7 @@ migrate -path ./infra/migrations -database "postgres://ginuser:ginpassword@local
 ## ファイル構成
 
 ```
-feelog-backend-go/
+tofunote-backend-go/
 ├── api/controllers/          # コントローラー層
 ├── domain/                   # ドメイン層
 ├── infra/                    # インフラ層

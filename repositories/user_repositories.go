@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	"feelog-backend/domain/user"
+	"tofunote-backend/domain/user"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"

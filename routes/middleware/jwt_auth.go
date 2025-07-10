@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strings"
 
-	"feelog-backend/domain/user"
-	"feelog-backend/infra"
-	"feelog-backend/repositories"
+	"tofunote-backend/domain/user"
+	"tofunote-backend/infra"
+	"tofunote-backend/repositories"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

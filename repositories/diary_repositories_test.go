@@ -2,9 +2,9 @@ package repositories
 
 import (
 	"errors"
-	"feelog-backend/domain/diary"
 	"testing"
 	"time"
+	"tofunote-backend/domain/diary"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/go-cmp/cmp"

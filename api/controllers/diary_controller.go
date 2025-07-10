@@ -1,11 +1,11 @@
 package controllers
 
 import (
-	"feelog-backend/domain/diary"
-	"feelog-backend/usecases"
 	"net/http"
 	"strings"
 	"time"
+	"tofunote-backend/domain/diary"
+	"tofunote-backend/usecases"
 
 	"github.com/gin-gonic/gin"
 )

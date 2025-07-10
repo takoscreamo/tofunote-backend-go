@@ -3,7 +3,7 @@ package controllers
 import (
 	"net/http"
 
-	"feelog-backend/usecases"
+	"tofunote-backend/usecases"
 
 	"github.com/gin-gonic/gin"
 )

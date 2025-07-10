@@ -2,8 +2,8 @@ package usecases
 
 import (
 	"errors"
-	"feelog-backend/domain/diary"
 	"testing"
+	"tofunote-backend/domain/diary"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"

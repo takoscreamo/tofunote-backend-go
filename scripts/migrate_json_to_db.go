@@ -2,12 +2,12 @@ package main
 
 import (
 	"encoding/json"
-	"feelog-backend/domain/diary"
-	"feelog-backend/infra"
-	"feelog-backend/repositories"
 	"fmt"
 	"log"
 	"os"
+	"tofunote-backend/domain/diary"
+	"tofunote-backend/infra"
+	"tofunote-backend/repositories"
 )
 
 type DiaryEntry struct {

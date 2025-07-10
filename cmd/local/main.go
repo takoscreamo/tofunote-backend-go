@@ -1,13 +1,13 @@
 package main
 
 import (
-	"feelog-backend/infra"
-	"feelog-backend/routes"
-	"feelog-backend/routes/middleware"
+	"tofunote-backend/infra"
+	"tofunote-backend/routes"
+	"tofunote-backend/routes/middleware"
 
-	"feelog-backend/api/controllers"
-	"feelog-backend/repositories"
-	"feelog-backend/usecases"
+	"tofunote-backend/api/controllers"
+	"tofunote-backend/repositories"
+	"tofunote-backend/usecases"
 
 	"github.com/gin-gonic/gin"
 )

@@ -1,8 +1,8 @@
 package repositories
 
 import (
-	"feelog-backend/domain/user"
 	"testing"
+	"tofunote-backend/domain/user"
 
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/sqlite"

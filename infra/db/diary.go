@@ -1,7 +1,7 @@
 package db
 
 import (
-	"feelog-backend/domain/diary"
+	"tofunote-backend/domain/diary"
 
 	"gorm.io/gorm"
 )

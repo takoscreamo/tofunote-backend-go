@@ -1,10 +1,10 @@
 package main
 
 import (
-	"feelog-backend/infra"
-	"feelog-backend/repositories"
 	"fmt"
 	"log"
+	"tofunote-backend/infra"
+	"tofunote-backend/repositories"
 )
 
 func main() {

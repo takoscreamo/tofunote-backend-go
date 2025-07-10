@@ -1,12 +1,12 @@
 package routes
 
 import (
-	"feelog-backend/api/controllers"
 	"log"
 	"os"
 	"time"
+	"tofunote-backend/api/controllers"
 
-	"feelog-backend/routes/middleware"
+	"tofunote-backend/routes/middleware"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -34,7 +34,7 @@ func SetupAPIEndpoints(router *gin.Engine, diaryController *controllers.DiaryCon
 			"status":      "healthy",
 			"timestamp":   time.Now().Format(time.RFC3339),
 			"environment": env,
-			"service":     "feelog-backend",
+			"service":     "tofunote-backend",
 			"version":     "1.0.0",
 			"endpoint":    "/health",
 			"message":     "This is the health check endpoint",

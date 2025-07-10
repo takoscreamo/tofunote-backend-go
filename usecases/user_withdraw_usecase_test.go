@@ -2,9 +2,9 @@ package usecases
 
 import (
 	"errors"
-	"feelog-backend/domain/diary"
-	"feelog-backend/domain/user"
 	"testing"
+	"tofunote-backend/domain/diary"
+	"tofunote-backend/domain/user"
 
 	"github.com/stretchr/testify/assert"
 )

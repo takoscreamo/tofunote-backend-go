@@ -1,13 +1,13 @@
 openapi: 3.0.0
 info:
-  title: FeelogAPI
+  title: TofunoteAPI
   description: ユーザーの日記を管理するためのRESTful API
   version: 1.0.0
 
 servers:
   - url: http://localhost:8080/api
     description: ローカル開発環境
-  - url: https://api.feelog.takoscreamo.com/api
+  - url: https://api.tofunote.takoscreamo.com/api
     description: 本番環境
 
 security:

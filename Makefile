@@ -6,12 +6,16 @@ ifneq (,$(wildcard .env))
     export
 endif
 
-# デフォルト値の設定（環境変数が未定義の場合）
+# 環境変数
 DB_HOST ?= localhost
-DB_USER ?= ginuser
-DB_PASSWORD ?= ginpassword
-DB_NAME ?= feelog
 DB_PORT ?= 5432
+DB_USER ?= ginuser
+DB_PASS ?= ginpassword
+DB_NAME ?= tofunote
+DB_SSL_MODE ?= disable
+
+# データベース接続文字列
+DATABASE_URL = postgres://$(DB_USER):$(DB_PASS)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSL_MODE)
 
 # 日記データ移行（テキストから直接）
 migrate-diary:
@@ -53,7 +57,7 @@ run:
 
 # ビルド
 build:
-	go build -o bin/feelog-backend main.go
+	go build -o bin/tofunote-backend main.go
 
 # テスト実行
 test:

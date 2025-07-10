@@ -1,8 +1,8 @@
 package usecases
 
 import (
-	"feelog-backend/domain/user"
-	"feelog-backend/repositories"
+	"tofunote-backend/domain/user"
+	"tofunote-backend/repositories"
 )
 
 type UserWithdrawUsecase struct {

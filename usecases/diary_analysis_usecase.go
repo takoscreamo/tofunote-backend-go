@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"feelog-backend/repositories"
+	"tofunote-backend/repositories"
 )
 
 type DiaryAnalysisUsecase struct {

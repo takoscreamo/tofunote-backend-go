@@ -2,16 +2,16 @@ package main
 
 import (
 	"context"
-	"feelog-backend/api/controllers"
-	"feelog-backend/infra"
-	"feelog-backend/repositories"
-	"feelog-backend/routes"
-	"feelog-backend/routes/middleware"
-	"feelog-backend/usecases"
 	"log"
 	"os"
 	"sync"
 	"time"
+	"tofunote-backend/api/controllers"
+	"tofunote-backend/infra"
+	"tofunote-backend/repositories"
+	"tofunote-backend/routes"
+	"tofunote-backend/routes/middleware"
+	"tofunote-backend/usecases"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"

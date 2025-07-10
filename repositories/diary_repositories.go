@@ -2,9 +2,9 @@ package repositories
 
 import (
 	"errors"
-	"feelog-backend/domain/diary"
-	"feelog-backend/infra/db"
 	"strings"
+	"tofunote-backend/domain/diary"
+	"tofunote-backend/infra/db"
 
 	"gorm.io/gorm"
 )
