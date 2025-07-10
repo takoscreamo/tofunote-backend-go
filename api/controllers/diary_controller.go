@@ -5,6 +5,7 @@ import (
 	"feelog-backend/usecases"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -126,10 +127,14 @@ type DiaryResponseDTO struct {
 
 // ToResponseDTO converts domain Diary to response DTO
 func ToResponseDTO(diary *diary.Diary) DiaryResponseDTO {
+	date := diary.Date
+	if t, err := time.Parse(time.RFC3339, diary.Date); err == nil {
+		date = t.Format("2006-01-02")
+	}
 	return DiaryResponseDTO{
 		ID:     diary.ID,
 		UserID: diary.UserID,
-		Date:   diary.Date,
+		Date:   date,
 		Mental: int(diary.Mental),
 		Diary:  diary.Diary,
 	}
