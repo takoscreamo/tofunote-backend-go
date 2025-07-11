@@ -80,7 +80,7 @@ func SetupDB() *gorm.DB {
 
 	log.Println("[DEBUG] SetupDB: AutoMigrate開始")
 	// AutoMigrateでテーブルを作成
-	err = database.AutoMigrate(&db.DiaryModel{})
+	err = database.AutoMigrate(&db.DiaryModel{}, &db.UserModel{})
 	if err != nil {
 		log.Printf("[ERROR] SetupDB: マイグレーション失敗: %v", err)
 		panic(fmt.Sprintf("Failed to migrate database: %v", err))
