@@ -4,6 +4,22 @@
 
 ---
 
+## 技術スタック
+
+- 言語: Go (Golang)
+- フレームワーク: Gin
+- データベース: PostgreSQL（開発時はSQLiteも利用可）
+- ORM: GORM
+- マイグレーション: golang-migrate
+- APIドキュメント: Swagger / OpenAPI
+- コンテナ: Docker, Docker Compose
+- テスト: Go標準testing, テーブル駆動テスト
+- JWT認証: github.com/golang-jwt/jwt
+- ホットリロード: air
+- デプロイ: AWS Lambda（API Gateway経由）
+
+---
+
 ## 主な機能
 
 - ユーザー登録・認証（JWT）
@@ -34,14 +50,13 @@
 
 ```mermaid
 graph TB
-    subgraph "プロジェクト構造の依存関係"
-        A[main.go<br/>cmd/local/main.go] --> B[routes/api.go<br/>middleware/]
-        B --> C[api/controllers/]
-        C --> D[usecases/]
-        D --> E[domain/]
-        F[repositories/] -.-> D
-        F[repositories/] -.-> E
-        G[infra/] --> F
+    subgraph "依存関係"
+        A[main.go] --> B[api/controllers/]
+        B --> C[usecases/]
+        C --> D[domain/]
+        E[repositories/] -.-> C
+        E[repositories/] -.-> D
+        F[infra/] --> E
     end
 ```
 
