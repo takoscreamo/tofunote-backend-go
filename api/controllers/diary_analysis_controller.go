@@ -23,7 +23,7 @@ func NewDiaryAnalysisController(usecase *usecases.DiaryAnalysisUsecase) *DiaryAn
 func (c *DiaryAnalysisController) AnalyzeAllDiariesHandler(ctx *gin.Context) {
 	// ハードコードでuser_id=1を使用
 	userID := "1"
-	result, err := c.DiaryAnalysisUsecase.AnalyzeUserDiaries(userID)
+	result, err := c.DiaryAnalysisUsecase.AnalyzeUserDiaries(ctx.Request.Context(), userID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

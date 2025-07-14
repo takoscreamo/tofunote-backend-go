@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -92,7 +93,7 @@ func TestFindAll(t *testing.T) {
 			tt.setupMock(mock)
 
 			repo := NewDiaryRepository(gormDB)
-			result, err := repo.FindAll()
+			result, err := repo.FindAll(context.Background())
 
 			if tt.expectedError {
 				if err == nil {
@@ -110,7 +111,7 @@ func TestFindAll(t *testing.T) {
 				return
 			}
 
-			if diff := cmp.Diff(tt.expectedDiaries, *result); diff != "" {
+			if diff := cmp.Diff(tt.expectedDiaries, result); diff != "" {
 				t.Errorf("期待値と実際の値が異なります:\n%s", diff)
 			}
 
@@ -187,7 +188,7 @@ func TestCreate(t *testing.T) {
 			tt.setupMock(mock)
 			repo := NewDiaryRepository(gormDB)
 
-			err := repo.Create(&tt.createDiary)
+			err := repo.Create(context.Background(), &tt.createDiary)
 			if tt.expectError {
 				if err == nil {
 					t.Error("エラーが期待されていましたが、発生しませんでした")
@@ -272,7 +273,7 @@ func TestUpdate(t *testing.T) {
 			tt.setupMock(mock)
 			repo := NewDiaryRepository(gormDB)
 
-			err := repo.Update(tt.userID, tt.date, &tt.updateDiary)
+			err := repo.Update(context.Background(), tt.userID, tt.date, &tt.updateDiary)
 			if tt.expectError {
 				if err == nil {
 					t.Error("エラーが期待されていましたが、発生しませんでした")
@@ -347,7 +348,7 @@ func TestDelete(t *testing.T) {
 			tt.setupMock(mock)
 			repo := NewDiaryRepository(gormDB)
 
-			err := repo.Delete(tt.userID, tt.date)
+			err := repo.Delete(context.Background(), tt.userID, tt.date)
 			if tt.expectError {
 				if err == nil {
 					t.Error("エラーが期待されていましたが、発生しませんでした")
@@ -431,7 +432,7 @@ func TestFindByUserIDAndDate(t *testing.T) {
 			tt.setupMock(mock)
 			repo := NewDiaryRepository(gormDB)
 
-			result, err := repo.FindByUserIDAndDate(tt.userID, tt.date)
+			result, err := repo.FindByUserIDAndDate(context.Background(), tt.userID, tt.date)
 			if tt.expectError {
 				if err == nil {
 					t.Error("エラーが期待されていましたが、発生しませんでした")
@@ -530,7 +531,7 @@ func TestFindByUserIDAndDateRange(t *testing.T) {
 			tt.setupMock(mock)
 			repo := NewDiaryRepository(gormDB)
 
-			result, err := repo.FindByUserIDAndDateRange(tt.userID, tt.startDate, tt.endDate)
+			result, err := repo.FindByUserIDAndDateRange(context.Background(), tt.userID, tt.startDate, tt.endDate)
 
 			if tt.expectError {
 				if err == nil {
@@ -550,7 +551,7 @@ func TestFindByUserIDAndDateRange(t *testing.T) {
 				return
 			}
 
-			if diff := cmp.Diff(tt.expectedDiaries, *result); diff != "" {
+			if diff := cmp.Diff(tt.expectedDiaries, result); diff != "" {
 				t.Errorf("期待値と実際の値が異なります:\n%s", diff)
 			}
 

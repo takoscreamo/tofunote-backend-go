@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -16,34 +17,36 @@ import (
 type mockUserRepo struct {
 	createdUser  *user.User
 	errCreate    error
-	FindByIDFunc func(id string) (*user.User, error)
-	UpdateFunc   func(u *user.User) error
+	FindByIDFunc func(ctx context.Context, id string) (*user.User, error)
+	UpdateFunc   func(ctx context.Context, u *user.User) error
 }
 
-func (m *mockUserRepo) FindByID(id string) (*user.User, error) {
+func (m *mockUserRepo) FindByID(ctx context.Context, id string) (*user.User, error) {
 	if m.FindByIDFunc != nil {
-		return m.FindByIDFunc(id)
+		return m.FindByIDFunc(ctx, id)
 	}
 	return nil, nil
 }
-func (m *mockUserRepo) Create(u *user.User) error {
+func (m *mockUserRepo) Create(ctx context.Context, u *user.User) error {
 	if m.errCreate != nil {
 		return m.errCreate
 	}
 	m.createdUser = u
 	return nil
 }
-func (m *mockUserRepo) FindByProviderId(provider, providerId string) (*user.User, error) {
+func (m *mockUserRepo) FindByProviderId(ctx context.Context, provider, providerId string) (*user.User, error) {
 	return nil, nil
 }
-func (m *mockUserRepo) FindByRefreshToken(refreshToken string) (*user.User, error) { return nil, nil }
-func (m *mockUserRepo) Update(u *user.User) error {
+func (m *mockUserRepo) FindByRefreshToken(ctx context.Context, refreshToken string) (*user.User, error) {
+	return nil, nil
+}
+func (m *mockUserRepo) Update(ctx context.Context, u *user.User) error {
 	if m.UpdateFunc != nil {
-		return m.UpdateFunc(u)
+		return m.UpdateFunc(ctx, u)
 	}
 	return nil
 }
-func (m *mockUserRepo) DeleteByID(id string) error {
+func (m *mockUserRepo) DeleteByID(ctx context.Context, id string) error {
 	return nil
 }
 
@@ -126,7 +129,7 @@ func TestGetMe_TableDriven(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	type fields struct {
-		findByIDFunc func(id string) (*user.User, error)
+		findByIDFunc func(ctx context.Context, id string) (*user.User, error)
 	}
 
 	tests := []struct {
@@ -139,7 +142,7 @@ func TestGetMe_TableDriven(t *testing.T) {
 		{
 			name: "正常系: ユーザー情報取得",
 			fields: fields{
-				findByIDFunc: func(id string) (*user.User, error) {
+				findByIDFunc: func(ctx context.Context, id string) (*user.User, error) {
 					return &user.User{ID: id, Nickname: "テスト太郎"}, nil
 				},
 			},
@@ -157,7 +160,7 @@ func TestGetMe_TableDriven(t *testing.T) {
 		{
 			name: "異常系: ユーザー未発見",
 			fields: fields{
-				findByIDFunc: func(id string) (*user.User, error) {
+				findByIDFunc: func(ctx context.Context, id string) (*user.User, error) {
 					return nil, nil
 				},
 			},
@@ -191,8 +194,8 @@ func TestPatchMe_TableDriven(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	type fields struct {
-		findByIDFunc func(id string) (*user.User, error)
-		updateFunc   func(u *user.User) error
+		findByIDFunc func(ctx context.Context, id string) (*user.User, error)
+		updateFunc   func(ctx context.Context, u *user.User) error
 	}
 
 	tests := []struct {
@@ -207,10 +210,10 @@ func TestPatchMe_TableDriven(t *testing.T) {
 		{
 			name: "正常系: ニックネーム更新",
 			fields: fields{
-				findByIDFunc: func(id string) (*user.User, error) {
+				findByIDFunc: func(ctx context.Context, id string) (*user.User, error) {
 					return &user.User{ID: id, Nickname: "旧名"}, nil
 				},
-				updateFunc: func(u *user.User) error {
+				updateFunc: func(ctx context.Context, u *user.User) error {
 					return nil
 				},
 			},
@@ -231,7 +234,7 @@ func TestPatchMe_TableDriven(t *testing.T) {
 		{
 			name: "異常系: ユーザー未発見",
 			fields: fields{
-				findByIDFunc: func(id string) (*user.User, error) {
+				findByIDFunc: func(ctx context.Context, id string) (*user.User, error) {
 					return nil, nil
 				},
 			},
@@ -243,7 +246,7 @@ func TestPatchMe_TableDriven(t *testing.T) {
 		{
 			name: "異常系: バリデーションエラー（空ボディ）",
 			fields: fields{
-				findByIDFunc: func(id string) (*user.User, error) {
+				findByIDFunc: func(ctx context.Context, id string) (*user.User, error) {
 					return &user.User{ID: id, Nickname: "旧名"}, nil
 				},
 			},
@@ -255,7 +258,7 @@ func TestPatchMe_TableDriven(t *testing.T) {
 		{
 			name: "異常系: 更新可能な項目なし",
 			fields: fields{
-				findByIDFunc: func(id string) (*user.User, error) {
+				findByIDFunc: func(ctx context.Context, id string) (*user.User, error) {
 					return &user.User{ID: id, Nickname: "旧名"}, nil
 				},
 			},

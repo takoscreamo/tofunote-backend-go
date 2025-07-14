@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"context"
 	"testing"
 	"tofunote-backend/domain/user"
 
@@ -32,9 +33,9 @@ func TestUserRepository_Create(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := repo.Create(tt.toCreate)
+			err := repo.Create(context.Background(), tt.toCreate)
 			assert.NoError(t, err)
-			found, err := repo.FindByID(tt.toCreate.ID)
+			found, err := repo.FindByID(context.Background(), tt.toCreate.ID)
 			assert.NoError(t, err)
 			assert.NotNil(t, found)
 			assert.Equal(t, tt.toCreate.ID, found.ID)
@@ -46,8 +47,8 @@ func TestUserRepository_Create(t *testing.T) {
 func TestUserRepository_FindByID(t *testing.T) {
 	db := setupUserTestDB(t)
 	repo := NewUserRepository(db)
-	repo.Create(&user.User{ID: "uuid-1", IsGuest: true})
-	repo.Create(&user.User{ID: "uuid-2", Provider: "google", ProviderID: "gid-2", IsGuest: false})
+	repo.Create(context.Background(), &user.User{ID: "uuid-1", IsGuest: true})
+	repo.Create(context.Background(), &user.User{ID: "uuid-2", Provider: "google", ProviderID: "gid-2", IsGuest: false})
 
 	tests := []struct {
 		name     string
@@ -60,7 +61,7 @@ func TestUserRepository_FindByID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			found, err := repo.FindByID(tt.findID)
+			found, err := repo.FindByID(context.Background(), tt.findID)
 			assert.NoError(t, err)
 			if tt.expectID != nil {
 				assert.NotNil(t, found)
@@ -75,8 +76,8 @@ func TestUserRepository_FindByID(t *testing.T) {
 func TestUserRepository_FindByProviderId(t *testing.T) {
 	db := setupUserTestDB(t)
 	repo := NewUserRepository(db)
-	repo.Create(&user.User{ID: "uuid-1", Provider: "google", ProviderID: "gid-1", IsGuest: false})
-	repo.Create(&user.User{ID: "uuid-2", Provider: "apple", ProviderID: "aid-2", IsGuest: false})
+	repo.Create(context.Background(), &user.User{ID: "uuid-1", Provider: "google", ProviderID: "gid-1", IsGuest: false})
+	repo.Create(context.Background(), &user.User{ID: "uuid-2", Provider: "apple", ProviderID: "aid-2", IsGuest: false})
 
 	tests := []struct {
 		name       string
@@ -90,7 +91,7 @@ func TestUserRepository_FindByProviderId(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			found, err := repo.FindByProviderId(tt.provider, tt.providerID)
+			found, err := repo.FindByProviderId(context.Background(), tt.provider, tt.providerID)
 			assert.NoError(t, err)
 			if tt.expectID != nil {
 				assert.NotNil(t, found)
@@ -105,14 +106,14 @@ func TestUserRepository_FindByProviderId(t *testing.T) {
 func TestUserRepository_Update(t *testing.T) {
 	db := setupUserTestDB(t)
 	repo := NewUserRepository(db)
-	repo.Create(&user.User{ID: "uuid-1", IsGuest: true})
+	repo.Create(context.Background(), &user.User{ID: "uuid-1", IsGuest: true})
 
 	t.Run("Update IsGuest", func(t *testing.T) {
-		u, _ := repo.FindByID("uuid-1")
+		u, _ := repo.FindByID(context.Background(), "uuid-1")
 		u.IsGuest = false
-		err := repo.Update(u)
+		err := repo.Update(context.Background(), u)
 		assert.NoError(t, err)
-		updated, _ := repo.FindByID("uuid-1")
+		updated, _ := repo.FindByID(context.Background(), "uuid-1")
 		assert.Equal(t, false, updated.IsGuest)
 	})
 }

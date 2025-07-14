@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -17,40 +18,40 @@ import (
 
 // モックサービス
 type mockDiaryUsecase struct {
-	diaries *[]diary.Diary
+	diaries []diary.Diary
 	diary   *diary.Diary
 	err     error
 }
 
-func (m *mockDiaryUsecase) FindAll() (*[]diary.Diary, error) {
+func (m *mockDiaryUsecase) FindAll(ctx context.Context) ([]diary.Diary, error) {
 	return m.diaries, m.err
 }
 
-func (m *mockDiaryUsecase) FindByUserID(userID string) (*[]diary.Diary, error) {
+func (m *mockDiaryUsecase) FindByUserID(ctx context.Context, userID string) ([]diary.Diary, error) {
 	return m.diaries, m.err
 }
 
-func (m *mockDiaryUsecase) FindByUserIDAndDate(userID string, date string) (*diary.Diary, error) {
+func (m *mockDiaryUsecase) FindByUserIDAndDate(ctx context.Context, userID string, date string) (*diary.Diary, error) {
 	return m.diary, m.err
 }
 
-func (m *mockDiaryUsecase) FindByUserIDAndDateRange(userID string, startDate, endDate string) (*[]diary.Diary, error) {
+func (m *mockDiaryUsecase) FindByUserIDAndDateRange(ctx context.Context, userID string, startDate, endDate string) ([]diary.Diary, error) {
 	return m.diaries, m.err
 }
 
-func (m *mockDiaryUsecase) Create(diary *diary.Diary) error {
+func (m *mockDiaryUsecase) Create(ctx context.Context, diary *diary.Diary) error {
 	return m.err
 }
 
-func (m *mockDiaryUsecase) Update(userID string, date string, diary *diary.Diary) error {
+func (m *mockDiaryUsecase) Update(ctx context.Context, userID string, date string, diary *diary.Diary) error {
 	return m.err
 }
 
-func (m *mockDiaryUsecase) Delete(userID string, date string) error {
+func (m *mockDiaryUsecase) Delete(ctx context.Context, userID string, date string) error {
 	return m.err
 }
 
-func (m *mockDiaryUsecase) DeleteByUserID(userID string) error {
+func (m *mockDiaryUsecase) DeleteByUserID(ctx context.Context, userID string) error {
 	return nil
 }
 
@@ -92,7 +93,7 @@ func TestDiaryController_FindAll(t *testing.T) {
 				diaries := make([]diary.Diary, len(testDiaries))
 				copy(diaries, testDiaries)
 				return &mockDiaryUsecase{
-					diaries: &diaries,
+					diaries: diaries,
 					err:     nil,
 				}
 			},
@@ -108,7 +109,7 @@ func TestDiaryController_FindAll(t *testing.T) {
 			setupMock: func() *mockDiaryUsecase {
 				emptyDiaries := make([]diary.Diary, 0)
 				return &mockDiaryUsecase{
-					diaries: &emptyDiaries,
+					diaries: emptyDiaries,
 					err:     nil,
 				}
 			},
@@ -580,7 +581,7 @@ func TestDiaryController_FindByUserIDAndDateRange(t *testing.T) {
 				diaries := make([]diary.Diary, len(testDiaries))
 				copy(diaries, testDiaries)
 				return &mockDiaryUsecase{
-					diaries: &diaries,
+					diaries: diaries,
 					err:     nil,
 				}
 			},

@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"tofunote-backend/domain/diary"
@@ -9,55 +10,43 @@ import (
 	"gorm.io/gorm"
 )
 
-type IDiaryRepository interface {
-	FindAll() (*[]diary.Diary, error)
-	FindByUserID(userID string) (*[]diary.Diary, error)
-	FindByUserIDAndDate(userID string, date string) (*diary.Diary, error)
-	FindByUserIDAndDateRange(userID string, startDate, endDate string) (*[]diary.Diary, error)
-	Create(diary *diary.Diary) error
-	Update(userID string, date string, diary *diary.Diary) error
-	Delete(userID string, date string) error
-	DeleteByUserID(userID string) error // 追加
-	// FindByID(diaryId int) (*models.Diary, error)
-}
-
 type DiaryRepository struct {
 	db *gorm.DB
 }
 
-func NewDiaryRepository(db *gorm.DB) IDiaryRepository {
+func NewDiaryRepository(db *gorm.DB) diary.DiaryRepository {
 	return &DiaryRepository{db: db}
 }
 
-func (r *DiaryRepository) FindAll() (*[]diary.Diary, error) {
+func (r *DiaryRepository) FindAll(ctx context.Context) ([]diary.Diary, error) {
 	var diaryModels []db.DiaryModel
-	if err := r.db.Find(&diaryModels).Error; err != nil {
+	if err := r.db.WithContext(ctx).Find(&diaryModels).Error; err != nil {
 		return nil, err
 	}
 
-	diaries := make([]diary.Diary, 0)
+	diaries := make([]diary.Diary, 0, len(diaryModels))
 	for _, model := range diaryModels {
 		diaries = append(diaries, *model.ToDomain())
 	}
-	return &diaries, nil
+	return diaries, nil
 }
 
-func (r *DiaryRepository) FindByUserID(userID string) (*[]diary.Diary, error) {
+func (r *DiaryRepository) FindByUserID(ctx context.Context, userID string) ([]diary.Diary, error) {
 	var diaryModels []db.DiaryModel
-	if err := r.db.Where("user_id = ?", userID).Find(&diaryModels).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("user_id = ?", userID).Find(&diaryModels).Error; err != nil {
 		return nil, err
 	}
 
-	diaries := make([]diary.Diary, 0)
+	diaries := make([]diary.Diary, 0, len(diaryModels))
 	for _, model := range diaryModels {
 		diaries = append(diaries, *model.ToDomain())
 	}
-	return &diaries, nil
+	return diaries, nil
 }
 
-func (r *DiaryRepository) FindByUserIDAndDate(userID string, date string) (*diary.Diary, error) {
+func (r *DiaryRepository) FindByUserIDAndDate(ctx context.Context, userID string, date string) (*diary.Diary, error) {
 	var diaryModel db.DiaryModel
-	if err := r.db.Where("user_id = ? AND date = ?", userID, date).First(&diaryModel).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("user_id = ? AND date = ?", userID, date).First(&diaryModel).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("指定された日付の日記が見つかりません")
 		}
@@ -66,22 +55,22 @@ func (r *DiaryRepository) FindByUserIDAndDate(userID string, date string) (*diar
 	return diaryModel.ToDomain(), nil
 }
 
-func (r *DiaryRepository) FindByUserIDAndDateRange(userID string, startDate, endDate string) (*[]diary.Diary, error) {
+func (r *DiaryRepository) FindByUserIDAndDateRange(ctx context.Context, userID string, startDate, endDate string) ([]diary.Diary, error) {
 	var diaryModels []db.DiaryModel
-	if err := r.db.Where("user_id = ? AND date BETWEEN ? AND ?", userID, startDate, endDate).Find(&diaryModels).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("user_id = ? AND date BETWEEN ? AND ?", userID, startDate, endDate).Find(&diaryModels).Error; err != nil {
 		return nil, err
 	}
 
-	diaries := make([]diary.Diary, 0)
+	diaries := make([]diary.Diary, 0, len(diaryModels))
 	for _, model := range diaryModels {
 		diaries = append(diaries, *model.ToDomain())
 	}
-	return &diaries, nil
+	return diaries, nil
 }
 
-func (r *DiaryRepository) Create(diary *diary.Diary) error {
+func (r *DiaryRepository) Create(ctx context.Context, diary *diary.Diary) error {
 	model := db.FromDomain(diary)
-	if err := r.db.Create(model).Error; err != nil {
+	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
 		// 複合ユニークキー制約違反のエラーハンドリング
 		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") ||
 			strings.Contains(err.Error(), "UNIQUE constraint failed") {
@@ -92,9 +81,9 @@ func (r *DiaryRepository) Create(diary *diary.Diary) error {
 	return nil
 }
 
-func (r *DiaryRepository) Update(userID string, date string, diary *diary.Diary) error {
+func (r *DiaryRepository) Update(ctx context.Context, userID string, date string, diary *diary.Diary) error {
 	model := db.FromDomain(diary)
-	result := r.db.Where("user_id = ? AND date = ?", userID, date).Updates(model)
+	result := r.db.WithContext(ctx).Where("user_id = ? AND date = ?", userID, date).Updates(model)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -104,8 +93,8 @@ func (r *DiaryRepository) Update(userID string, date string, diary *diary.Diary)
 	return nil
 }
 
-func (r *DiaryRepository) Delete(userID string, date string) error {
-	result := r.db.Unscoped().Where("user_id = ? AND date = ?", userID, date).Delete(&db.DiaryModel{})
+func (r *DiaryRepository) Delete(ctx context.Context, userID string, date string) error {
+	result := r.db.WithContext(ctx).Unscoped().Where("user_id = ? AND date = ?", userID, date).Delete(&db.DiaryModel{})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -116,8 +105,8 @@ func (r *DiaryRepository) Delete(userID string, date string) error {
 }
 
 // 指定ユーザーの全日記を削除
-func (r *DiaryRepository) DeleteByUserID(userID string) error {
-	result := r.db.Unscoped().Where("user_id = ?", userID).Delete(&db.DiaryModel{})
+func (r *DiaryRepository) DeleteByUserID(ctx context.Context, userID string) error {
+	result := r.db.WithContext(ctx).Unscoped().Where("user_id = ?", userID).Delete(&db.DiaryModel{})
 	if result.Error != nil {
 		return result.Error
 	}

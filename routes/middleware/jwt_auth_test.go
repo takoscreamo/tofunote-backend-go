@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,16 +17,18 @@ type mockUserRepo struct {
 	userByID *user.User
 }
 
-func (m *mockUserRepo) FindByID(id string) (*user.User, error) {
+func (m *mockUserRepo) FindByID(ctx context.Context, id string) (*user.User, error) {
 	return m.userByID, nil
 }
-func (m *mockUserRepo) FindByProviderId(provider, providerId string) (*user.User, error) {
+func (m *mockUserRepo) FindByProviderId(ctx context.Context, provider, providerId string) (*user.User, error) {
 	return nil, nil
 }
-func (m *mockUserRepo) Create(u *user.User) error                                  { return nil }
-func (m *mockUserRepo) Update(u *user.User) error                                  { return nil }
-func (m *mockUserRepo) FindByRefreshToken(refreshToken string) (*user.User, error) { return nil, nil }
-func (m *mockUserRepo) DeleteByID(id string) error {
+func (m *mockUserRepo) Create(ctx context.Context, u *user.User) error { return nil }
+func (m *mockUserRepo) Update(ctx context.Context, u *user.User) error { return nil }
+func (m *mockUserRepo) FindByRefreshToken(ctx context.Context, refreshToken string) (*user.User, error) {
+	return nil, nil
+}
+func (m *mockUserRepo) DeleteByID(ctx context.Context, id string) error {
 	return nil
 }
 

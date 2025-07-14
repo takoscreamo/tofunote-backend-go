@@ -30,14 +30,14 @@ func (c *DiaryController) FindAll(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザーIDの形式が不正です"})
 		return
 	}
-	diaries, err := c.usecase.FindByUserID(userIDStr)
+	diaries, err := c.usecase.FindByUserID(ctx.Request.Context(), userIDStr)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	responseDTOs := make([]DiaryResponseDTO, 0, len(*diaries))
-	for _, d := range *diaries {
+	responseDTOs := make([]DiaryResponseDTO, 0, len(diaries))
+	for _, d := range diaries {
 		responseDTOs = append(responseDTOs, ToResponseDTO(&d))
 	}
 
@@ -58,7 +58,7 @@ func (c *DiaryController) FindByUserIDAndDate(ctx *gin.Context) {
 	}
 	date := ctx.Param("date")
 
-	diary, err := c.usecase.FindByUserIDAndDate(userIDStr, date)
+	diary, err := c.usecase.FindByUserIDAndDate(ctx.Request.Context(), userIDStr, date)
 	if err != nil {
 		if strings.Contains(err.Error(), "指定された日付の日記が見つかりません") {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -92,14 +92,14 @@ func (c *DiaryController) FindByUserIDAndDateRange(ctx *gin.Context) {
 		return
 	}
 
-	diaries, err := c.usecase.FindByUserIDAndDateRange(userIDStr, startDate, endDate)
+	diaries, err := c.usecase.FindByUserIDAndDateRange(ctx.Request.Context(), userIDStr, startDate, endDate)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	responseDTOs := make([]DiaryResponseDTO, 0, len(*diaries))
-	for _, d := range *diaries {
+	responseDTOs := make([]DiaryResponseDTO, 0, len(diaries))
+	for _, d := range diaries {
 		responseDTOs = append(responseDTOs, ToResponseDTO(&d))
 	}
 
@@ -169,7 +169,7 @@ func (c *DiaryController) Create(ctx *gin.Context) {
 		Mental: mental,
 		Diary:  req.Diary,
 	}
-	err = c.usecase.Create(&newDiary)
+	err = c.usecase.Create(ctx.Request.Context(), &newDiary)
 	if err != nil {
 		// 複合ユニークキー制約違反の場合は409 Conflictを返す
 		if strings.Contains(err.Error(), "この日付の日記は既に作成されています") {
@@ -215,7 +215,7 @@ func (c *DiaryController) Update(ctx *gin.Context) {
 		Diary:  req.Diary,
 	}
 
-	err = c.usecase.Update(userIDStr, date, &updateDiary)
+	err = c.usecase.Update(ctx.Request.Context(), userIDStr, date, &updateDiary)
 	if err != nil {
 		if strings.Contains(err.Error(), "指定された日付の日記が見つかりません") {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -242,7 +242,7 @@ func (c *DiaryController) Delete(ctx *gin.Context) {
 	}
 	date := ctx.Param("date")
 
-	err := c.usecase.Delete(userIDStr, date)
+	err := c.usecase.Delete(ctx.Request.Context(), userIDStr, date)
 	if err != nil {
 		if strings.Contains(err.Error(), "指定された日付の日記が見つかりません") {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})

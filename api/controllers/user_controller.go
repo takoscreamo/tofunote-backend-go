@@ -63,7 +63,7 @@ func (c *UserController) GuestLogin(ctx *gin.Context) {
 		IsGuest:      true,
 		RefreshToken: refreshToken,
 	}
-	if err := c.repo.Create(u); err != nil {
+	if err := c.repo.Create(ctx.Request.Context(), u); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザー作成に失敗しました"})
 		return
 	}
@@ -83,7 +83,7 @@ func (c *UserController) RefreshToken(ctx *gin.Context) {
 		return
 	}
 	// リフレッシュトークンでユーザー検索
-	u, err := c.repo.FindByRefreshToken(req.RefreshToken)
+	u, err := c.repo.FindByRefreshToken(ctx.Request.Context(), req.RefreshToken)
 	if err != nil || u == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token"})
 		return
@@ -109,7 +109,7 @@ func (c *UserController) DeleteMe(ctx *gin.Context) {
 		return
 	}
 	// 退会ユースケースで一括削除
-	err := c.withdrawUsecase.Withdraw(userIDStr)
+	err := c.withdrawUsecase.Withdraw(ctx.Request.Context(), userIDStr)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "退会処理に失敗しました: " + err.Error()})
 		return
@@ -129,7 +129,7 @@ func (c *UserController) GetMe(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザーIDの形式が不正です"})
 		return
 	}
-	u, err := c.repo.FindByID(userIDStr)
+	u, err := c.repo.FindByID(ctx.Request.Context(), userIDStr)
 	if err != nil || u == nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザーが見つかりません"})
 		return
@@ -153,7 +153,7 @@ func (c *UserController) PatchMe(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザーIDの形式が不正です"})
 		return
 	}
-	u, err := c.repo.FindByID(userIDStr)
+	u, err := c.repo.FindByID(ctx.Request.Context(), userIDStr)
 	if err != nil || u == nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザーが見つかりません"})
 		return
@@ -173,7 +173,7 @@ func (c *UserController) PatchMe(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "更新可能な項目がありません"})
 		return
 	}
-	if err := c.repo.Update(u); err != nil {
+	if err := c.repo.Update(ctx.Request.Context(), u); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザー情報の更新に失敗しました"})
 		return
 	}

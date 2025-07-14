@@ -1,57 +1,57 @@
 package usecases
 
 import (
+	"context"
 	"tofunote-backend/domain/diary"
-	"tofunote-backend/repositories"
 )
 
 type IDiaryUsecase interface {
-	FindAll() (*[]diary.Diary, error)
-	FindByUserID(userID string) (*[]diary.Diary, error)
-	FindByUserIDAndDate(userID string, date string) (*diary.Diary, error)
-	FindByUserIDAndDateRange(userID string, startDate, endDate string) (*[]diary.Diary, error)
-	Create(diary *diary.Diary) error
-	Update(userID string, date string, diary *diary.Diary) error
-	Delete(userID string, date string) error
-	DeleteByUserID(userID string) error
+	FindAll(ctx context.Context) ([]diary.Diary, error)
+	FindByUserID(ctx context.Context, userID string) ([]diary.Diary, error)
+	FindByUserIDAndDate(ctx context.Context, userID string, date string) (*diary.Diary, error)
+	FindByUserIDAndDateRange(ctx context.Context, userID string, startDate, endDate string) ([]diary.Diary, error)
+	Create(ctx context.Context, diary *diary.Diary) error
+	Update(ctx context.Context, userID string, date string, diary *diary.Diary) error
+	Delete(ctx context.Context, userID string, date string) error
+	DeleteByUserID(ctx context.Context, userID string) error
 }
 
 type DiaryUsecase struct {
-	repository repositories.IDiaryRepository
+	repository diary.DiaryRepository
 }
 
-func NewDiaryUsecase(repository repositories.IDiaryRepository) IDiaryUsecase {
+func NewDiaryUsecase(repository diary.DiaryRepository) IDiaryUsecase {
 	return &DiaryUsecase{repository: repository}
 }
 
-func (s *DiaryUsecase) FindAll() (*[]diary.Diary, error) {
-	return s.repository.FindAll()
+func (s *DiaryUsecase) FindAll(ctx context.Context) ([]diary.Diary, error) {
+	return s.repository.FindAll(ctx)
 }
 
-func (s *DiaryUsecase) FindByUserID(userID string) (*[]diary.Diary, error) {
-	return s.repository.FindByUserID(userID)
+func (s *DiaryUsecase) FindByUserID(ctx context.Context, userID string) ([]diary.Diary, error) {
+	return s.repository.FindByUserID(ctx, userID)
 }
 
-func (s *DiaryUsecase) FindByUserIDAndDate(userID string, date string) (*diary.Diary, error) {
-	return s.repository.FindByUserIDAndDate(userID, date)
+func (s *DiaryUsecase) FindByUserIDAndDate(ctx context.Context, userID string, date string) (*diary.Diary, error) {
+	return s.repository.FindByUserIDAndDate(ctx, userID, date)
 }
 
-func (s *DiaryUsecase) FindByUserIDAndDateRange(userID string, startDate, endDate string) (*[]diary.Diary, error) {
-	return s.repository.FindByUserIDAndDateRange(userID, startDate, endDate)
+func (s *DiaryUsecase) FindByUserIDAndDateRange(ctx context.Context, userID string, startDate, endDate string) ([]diary.Diary, error) {
+	return s.repository.FindByUserIDAndDateRange(ctx, userID, startDate, endDate)
 }
 
-func (s *DiaryUsecase) Create(diary *diary.Diary) error {
-	return s.repository.Create(diary)
+func (s *DiaryUsecase) Create(ctx context.Context, diary *diary.Diary) error {
+	return s.repository.Create(ctx, diary)
 }
 
-func (s *DiaryUsecase) Update(userID string, date string, diary *diary.Diary) error {
-	return s.repository.Update(userID, date, diary)
+func (s *DiaryUsecase) Update(ctx context.Context, userID string, date string, diary *diary.Diary) error {
+	return s.repository.Update(ctx, userID, date, diary)
 }
 
-func (s *DiaryUsecase) Delete(userID string, date string) error {
-	return s.repository.Delete(userID, date)
+func (s *DiaryUsecase) Delete(ctx context.Context, userID string, date string) error {
+	return s.repository.Delete(ctx, userID, date)
 }
 
-func (s *DiaryUsecase) DeleteByUserID(userID string) error {
-	return s.repository.DeleteByUserID(userID)
+func (s *DiaryUsecase) DeleteByUserID(ctx context.Context, userID string) error {
+	return s.repository.DeleteByUserID(ctx, userID)
 }

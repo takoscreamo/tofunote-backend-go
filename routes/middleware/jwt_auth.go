@@ -38,7 +38,7 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 		// userIDからユーザー情報取得
 		var isGuest bool
 		if userRepo != nil {
-			u, err := userRepo.FindByID(userID)
+			u, err := userRepo.FindByID(c.Request.Context(), userID)
 			if err == nil && u != nil {
 				isGuest = u.IsGuest
 			}

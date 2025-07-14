@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"tofunote-backend/domain/diary"
@@ -9,43 +10,39 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// モックリポジトリ（IDiaryRepository の簡易実装）
+// モックリポジトリ（domain/diary.DiaryRepository の簡易実装）
 type mockDiaryRepository struct {
-	diaries *[]diary.Diary
+	diaries []diary.Diary
 	err     error
 }
 
-func (m *mockDiaryRepository) FindAll() (*[]diary.Diary, error) {
+func (m *mockDiaryRepository) FindAll(ctx context.Context) ([]diary.Diary, error) {
 	return m.diaries, m.err
 }
 
-func (m *mockDiaryRepository) FindByUserID(userID string) (*[]diary.Diary, error) {
+func (m *mockDiaryRepository) FindByUserID(ctx context.Context, userID string) ([]diary.Diary, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
-	if m.diaries == nil {
-		emptySlice := make([]diary.Diary, 0)
-		return &emptySlice, nil
-	}
-	// 特定のユーザーの日記のみをフィルタリング
 	var userDiaries []diary.Diary
-	for _, d := range *m.diaries {
-		if d.UserID == userID {
-			userDiaries = append(userDiaries, d)
+	if m.diaries != nil {
+		for _, d := range m.diaries {
+			if d.UserID == userID {
+				userDiaries = append(userDiaries, d)
+			}
 		}
 	}
-	// 存在しないユーザーの場合も空配列を返す（nilではなく）
-	return &userDiaries, nil
+	if userDiaries == nil {
+		userDiaries = make([]diary.Diary, 0)
+	}
+	return userDiaries, nil
 }
 
-func (m *mockDiaryRepository) FindByUserIDAndDate(userID string, date string) (*diary.Diary, error) {
+func (m *mockDiaryRepository) FindByUserIDAndDate(ctx context.Context, userID string, date string) (*diary.Diary, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
-	if m.diaries == nil {
-		return nil, errors.New("指定された日付の日記が見つかりません")
-	}
-	for _, d := range *m.diaries {
+	for _, d := range m.diaries {
 		if d.UserID == userID && d.Date == date {
 			return &d, nil
 		}
@@ -53,39 +50,38 @@ func (m *mockDiaryRepository) FindByUserIDAndDate(userID string, date string) (*
 	return nil, errors.New("指定された日付の日記が見つかりません")
 }
 
-func (m *mockDiaryRepository) FindByUserIDAndDateRange(userID string, startDate, endDate string) (*[]diary.Diary, error) {
+func (m *mockDiaryRepository) FindByUserIDAndDateRange(ctx context.Context, userID string, startDate, endDate string) ([]diary.Diary, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
-	if m.diaries == nil {
-		emptySlice := make([]diary.Diary, 0)
-		return &emptySlice, nil
-	}
-	// 特定のユーザーの指定期間の日記のみをフィルタリング
 	var userDiaries []diary.Diary
-	for _, d := range *m.diaries {
-		if d.UserID == userID && d.Date >= startDate && d.Date <= endDate {
-			userDiaries = append(userDiaries, d)
+	if m.diaries != nil {
+		for _, d := range m.diaries {
+			if d.UserID == userID && d.Date >= startDate && d.Date <= endDate {
+				userDiaries = append(userDiaries, d)
+			}
 		}
 	}
-	// 空の配列を返す（nilではなく）
-	return &userDiaries, nil
+	if userDiaries == nil {
+		userDiaries = make([]diary.Diary, 0)
+	}
+	return userDiaries, nil
 }
 
-func (m *mockDiaryRepository) Create(diary *diary.Diary) error {
+func (m *mockDiaryRepository) Create(ctx context.Context, diary *diary.Diary) error {
 	return m.err
 }
 
-func (m *mockDiaryRepository) Update(userID string, date string, diary *diary.Diary) error {
+func (m *mockDiaryRepository) Update(ctx context.Context, userID string, date string, diary *diary.Diary) error {
 	return m.err
 }
 
-func (m *mockDiaryRepository) Delete(userID string, date string) error {
+func (m *mockDiaryRepository) Delete(ctx context.Context, userID string, date string) error {
 	return m.err
 }
 
-func (m *mockDiaryRepository) DeleteByUserID(userID string) error {
-	return nil
+func (m *mockDiaryRepository) DeleteByUserID(ctx context.Context, userID string) error {
+	return m.err
 }
 
 // testDiaries はテスト用のダイアリーデータを定義します
@@ -103,7 +99,7 @@ func TestDiaryUsecase_FindAll(t *testing.T) {
 	tests := []struct {
 		name      string
 		setupMock func() *mockDiaryRepository
-		expected  *[]diary.Diary
+		expected  []diary.Diary
 		hasError  bool
 	}{
 		{
@@ -112,11 +108,11 @@ func TestDiaryUsecase_FindAll(t *testing.T) {
 				diaries := make([]diary.Diary, len(testDiaries))
 				copy(diaries, testDiaries)
 				return &mockDiaryRepository{
-					diaries: &diaries,
+					diaries: diaries,
 					err:     nil,
 				}
 			},
-			expected: &testDiaries,
+			expected: testDiaries,
 			hasError: false,
 		},
 		{
@@ -137,7 +133,7 @@ func TestDiaryUsecase_FindAll(t *testing.T) {
 			mock := tt.setupMock()
 			usecase := NewDiaryUsecase(mock)
 
-			result, err := usecase.FindAll()
+			result, err := usecase.FindAll(context.Background())
 
 			if tt.hasError {
 				assert.Error(t, err)
@@ -158,7 +154,7 @@ func TestDiaryUsecase_FindByUserID(t *testing.T) {
 		name      string
 		userID    string
 		setupMock func() *mockDiaryRepository
-		expected  *[]diary.Diary
+		expected  []diary.Diary
 		hasError  bool
 	}{
 		{
@@ -168,11 +164,11 @@ func TestDiaryUsecase_FindByUserID(t *testing.T) {
 				diaries := make([]diary.Diary, len(testDiaries))
 				copy(diaries, testDiaries)
 				return &mockDiaryRepository{
-					diaries: &diaries,
+					diaries: diaries,
 					err:     nil,
 				}
 			},
-			expected: &[]diary.Diary{
+			expected: []diary.Diary{
 				{ID: "1", UserID: "1", Date: "2025-05-01", Mental: testDiaries[0].Mental, Diary: "今日は良い一日だった"},
 				{ID: "2", UserID: "1", Date: "2025-05-02", Mental: testDiaries[1].Mental, Diary: "少し疲れた"},
 			},
@@ -185,11 +181,11 @@ func TestDiaryUsecase_FindByUserID(t *testing.T) {
 				diaries := make([]diary.Diary, len(testDiaries))
 				copy(diaries, testDiaries)
 				return &mockDiaryRepository{
-					diaries: &diaries,
+					diaries: diaries,
 					err:     nil,
 				}
 			},
-			expected: &[]diary.Diary{},
+			expected: []diary.Diary{},
 			hasError: false,
 		},
 		{
@@ -211,7 +207,7 @@ func TestDiaryUsecase_FindByUserID(t *testing.T) {
 			mock := tt.setupMock()
 			usecase := NewDiaryUsecase(mock)
 
-			result, err := usecase.FindByUserID(tt.userID)
+			result, err := usecase.FindByUserID(context.Background(), tt.userID)
 
 			if tt.hasError {
 				assert.Error(t, err)
@@ -219,24 +215,8 @@ func TestDiaryUsecase_FindByUserID(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
-				// より直接的な比較
-				if result == nil && tt.expected == nil {
-					// 両方ともnilの場合はOK
-				} else if result == nil || tt.expected == nil {
-					// 片方だけnilの場合はNG
-					t.Errorf("FindByUserID() mismatch: result=%v, expected=%v", result, tt.expected)
-				} else {
-					// 両方ともnilでない場合は内容を比較
-					if len(*result) != len(*tt.expected) {
-						t.Errorf("FindByUserID() length mismatch: got=%d, expected=%d", len(*result), len(*tt.expected))
-					} else {
-						for i, r := range *result {
-							e := (*tt.expected)[i]
-							if r != e {
-								t.Errorf("FindByUserID() item[%d] mismatch: got=%+v, expected=%+v", i, r, e)
-							}
-						}
-					}
+				if diff := cmp.Diff(tt.expected, result); diff != "" {
+					t.Errorf("FindByUserID() mismatch (-expected +got):\n%s", diff)
 				}
 			}
 		})
@@ -253,14 +233,14 @@ func TestDiaryUsecase_FindByUserIDAndDate(t *testing.T) {
 		hasError  bool
 	}{
 		{
-			name:   "正常系：指定されたユーザーと日付の日記を取得できる",
+			name:   "正常系：特定ユーザーの特定日付の日記を取得できる",
 			userID: "1",
 			date:   "2025-05-01",
 			setupMock: func() *mockDiaryRepository {
 				diaries := make([]diary.Diary, len(testDiaries))
 				copy(diaries, testDiaries)
 				return &mockDiaryRepository{
-					diaries: &diaries,
+					diaries: diaries,
 					err:     nil,
 				}
 			},
@@ -268,14 +248,14 @@ func TestDiaryUsecase_FindByUserIDAndDate(t *testing.T) {
 			hasError: false,
 		},
 		{
-			name:   "異常系：指定された日記が見つからない",
+			name:   "異常系：存在しない日記の場合はエラーを返す",
 			userID: "1",
-			date:   "2025-05-99",
+			date:   "2025-05-03",
 			setupMock: func() *mockDiaryRepository {
 				diaries := make([]diary.Diary, len(testDiaries))
 				copy(diaries, testDiaries)
 				return &mockDiaryRepository{
-					diaries: &diaries,
+					diaries: diaries,
 					err:     nil,
 				}
 			},
@@ -302,7 +282,7 @@ func TestDiaryUsecase_FindByUserIDAndDate(t *testing.T) {
 			mock := tt.setupMock()
 			usecase := NewDiaryUsecase(mock)
 
-			result, err := usecase.FindByUserIDAndDate(tt.userID, tt.date)
+			result, err := usecase.FindByUserIDAndDate(context.Background(), tt.userID, tt.date)
 
 			if tt.hasError {
 				assert.Error(t, err)
@@ -319,6 +299,14 @@ func TestDiaryUsecase_FindByUserIDAndDate(t *testing.T) {
 }
 
 func TestDiaryUsecase_Create(t *testing.T) {
+	m5, _ := diary.NewMental(5)
+	newDiary := &diary.Diary{
+		UserID: "1",
+		Date:   "2025-05-03",
+		Mental: m5,
+		Diary:  "新しい日記",
+	}
+
 	tests := []struct {
 		name      string
 		diary     *diary.Diary
@@ -326,31 +314,23 @@ func TestDiaryUsecase_Create(t *testing.T) {
 		hasError  bool
 	}{
 		{
-			name: "正常系：日記を作成できる",
-			diary: &diary.Diary{
-				UserID: "1",
-				Date:   "2025-05-03",
-				Mental: testDiaries[0].Mental,
-				Diary:  "新しい日記",
-			},
+			name:  "正常系：日記を作成できる",
+			diary: newDiary,
 			setupMock: func() *mockDiaryRepository {
 				return &mockDiaryRepository{
-					err: nil,
+					diaries: testDiaries,
+					err:     nil,
 				}
 			},
 			hasError: false,
 		},
 		{
-			name: "異常系：リポジトリがエラーを返す",
-			diary: &diary.Diary{
-				UserID: "1",
-				Date:   "2025-05-03",
-				Mental: testDiaries[0].Mental,
-				Diary:  "新しい日記",
-			},
+			name:  "異常系：リポジトリがエラーを返す",
+			diary: newDiary,
 			setupMock: func() *mockDiaryRepository {
 				return &mockDiaryRepository{
-					err: errors.New("DBエラー"),
+					diaries: testDiaries,
+					err:     errors.New("DBエラー"),
 				}
 			},
 			hasError: true,
@@ -362,7 +342,7 @@ func TestDiaryUsecase_Create(t *testing.T) {
 			mock := tt.setupMock()
 			usecase := NewDiaryUsecase(mock)
 
-			err := usecase.Create(tt.diary)
+			err := usecase.Create(context.Background(), tt.diary)
 
 			if tt.hasError {
 				assert.Error(t, err)
@@ -374,6 +354,14 @@ func TestDiaryUsecase_Create(t *testing.T) {
 }
 
 func TestDiaryUsecase_Update(t *testing.T) {
+	m4, _ := diary.NewMental(4)
+	updateDiary := &diary.Diary{
+		UserID: "1",
+		Date:   "2025-05-01",
+		Mental: m4,
+		Diary:  "更新された日記",
+	}
+
 	tests := []struct {
 		name      string
 		userID    string
@@ -386,15 +374,11 @@ func TestDiaryUsecase_Update(t *testing.T) {
 			name:   "正常系：日記を更新できる",
 			userID: "1",
 			date:   "2025-05-01",
-			diary: &diary.Diary{
-				UserID: "1",
-				Date:   "2025-05-01",
-				Mental: testDiaries[0].Mental,
-				Diary:  "更新された日記",
-			},
+			diary:  updateDiary,
 			setupMock: func() *mockDiaryRepository {
 				return &mockDiaryRepository{
-					err: nil,
+					diaries: testDiaries,
+					err:     nil,
 				}
 			},
 			hasError: false,
@@ -403,15 +387,11 @@ func TestDiaryUsecase_Update(t *testing.T) {
 			name:   "異常系：リポジトリがエラーを返す",
 			userID: "1",
 			date:   "2025-05-01",
-			diary: &diary.Diary{
-				UserID: "1",
-				Date:   "2025-05-01",
-				Mental: testDiaries[0].Mental,
-				Diary:  "更新された日記",
-			},
+			diary:  updateDiary,
 			setupMock: func() *mockDiaryRepository {
 				return &mockDiaryRepository{
-					err: errors.New("DBエラー"),
+					diaries: testDiaries,
+					err:     errors.New("DBエラー"),
 				}
 			},
 			hasError: true,
@@ -423,7 +403,7 @@ func TestDiaryUsecase_Update(t *testing.T) {
 			mock := tt.setupMock()
 			usecase := NewDiaryUsecase(mock)
 
-			err := usecase.Update(tt.userID, tt.date, tt.diary)
+			err := usecase.Update(context.Background(), tt.userID, tt.date, tt.diary)
 
 			if tt.hasError {
 				assert.Error(t, err)
@@ -448,7 +428,8 @@ func TestDiaryUsecase_Delete(t *testing.T) {
 			date:   "2025-05-01",
 			setupMock: func() *mockDiaryRepository {
 				return &mockDiaryRepository{
-					err: nil,
+					diaries: testDiaries,
+					err:     nil,
 				}
 			},
 			hasError: false,
@@ -459,7 +440,8 @@ func TestDiaryUsecase_Delete(t *testing.T) {
 			date:   "2025-05-01",
 			setupMock: func() *mockDiaryRepository {
 				return &mockDiaryRepository{
-					err: errors.New("DBエラー"),
+					diaries: testDiaries,
+					err:     errors.New("DBエラー"),
 				}
 			},
 			hasError: true,
@@ -471,7 +453,7 @@ func TestDiaryUsecase_Delete(t *testing.T) {
 			mock := tt.setupMock()
 			usecase := NewDiaryUsecase(mock)
 
-			err := usecase.Delete(tt.userID, tt.date)
+			err := usecase.Delete(context.Background(), tt.userID, tt.date)
 
 			if tt.hasError {
 				assert.Error(t, err)
@@ -489,11 +471,11 @@ func TestDiaryUsecase_FindByUserIDAndDateRange(t *testing.T) {
 		startDate string
 		endDate   string
 		setupMock func() *mockDiaryRepository
-		expected  *[]diary.Diary
+		expected  []diary.Diary
 		hasError  bool
 	}{
 		{
-			name:      "正常系：指定された期間の日記を取得できる",
+			name:      "正常系：指定期間の日記を取得できる",
 			userID:    "1",
 			startDate: "2025-05-01",
 			endDate:   "2025-05-02",
@@ -501,46 +483,30 @@ func TestDiaryUsecase_FindByUserIDAndDateRange(t *testing.T) {
 				diaries := make([]diary.Diary, len(testDiaries))
 				copy(diaries, testDiaries)
 				return &mockDiaryRepository{
-					diaries: &diaries,
+					diaries: diaries,
 					err:     nil,
 				}
 			},
-			expected: &[]diary.Diary{
+			expected: []diary.Diary{
 				{ID: "1", UserID: "1", Date: "2025-05-01", Mental: testDiaries[0].Mental, Diary: "今日は良い一日だった"},
 				{ID: "2", UserID: "1", Date: "2025-05-02", Mental: testDiaries[1].Mental, Diary: "少し疲れた"},
 			},
 			hasError: false,
 		},
 		{
-			name:      "正常系：指定された期間に日記がない場合は空配列を返す",
+			name:      "正常系：期間外の場合は空配列を返す",
 			userID:    "1",
-			startDate: "2025-06-01",
-			endDate:   "2025-06-30",
+			startDate: "2025-05-10",
+			endDate:   "2025-05-15",
 			setupMock: func() *mockDiaryRepository {
 				diaries := make([]diary.Diary, len(testDiaries))
 				copy(diaries, testDiaries)
 				return &mockDiaryRepository{
-					diaries: &diaries,
+					diaries: diaries,
 					err:     nil,
 				}
 			},
-			expected: new([]diary.Diary),
-			hasError: false,
-		},
-		{
-			name:      "正常系：存在しないユーザーの場合は空配列を返す",
-			userID:    "999",
-			startDate: "2025-05-01",
-			endDate:   "2025-05-02",
-			setupMock: func() *mockDiaryRepository {
-				diaries := make([]diary.Diary, len(testDiaries))
-				copy(diaries, testDiaries)
-				return &mockDiaryRepository{
-					diaries: &diaries,
-					err:     nil,
-				}
-			},
-			expected: new([]diary.Diary),
+			expected: []diary.Diary{},
 			hasError: false,
 		},
 		{
@@ -564,7 +530,7 @@ func TestDiaryUsecase_FindByUserIDAndDateRange(t *testing.T) {
 			mock := tt.setupMock()
 			usecase := NewDiaryUsecase(mock)
 
-			result, err := usecase.FindByUserIDAndDateRange(tt.userID, tt.startDate, tt.endDate)
+			result, err := usecase.FindByUserIDAndDateRange(context.Background(), tt.userID, tt.startDate, tt.endDate)
 
 			if tt.hasError {
 				assert.Error(t, err)

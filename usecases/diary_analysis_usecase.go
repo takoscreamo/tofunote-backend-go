@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -9,14 +10,14 @@ import (
 	"strconv"
 	"strings"
 
-	"tofunote-backend/repositories"
+	"tofunote-backend/domain/diary"
 )
 
 type DiaryAnalysisUsecase struct {
-	DiaryRepository repositories.IDiaryRepository
+	DiaryRepository diary.DiaryRepository
 }
 
-func NewDiaryAnalysisUsecase(diaryRepository repositories.IDiaryRepository) *DiaryAnalysisUsecase {
+func NewDiaryAnalysisUsecase(diaryRepository diary.DiaryRepository) *DiaryAnalysisUsecase {
 	return &DiaryAnalysisUsecase{
 		DiaryRepository: diaryRepository,
 	}
@@ -39,15 +40,15 @@ type AnalysisResponse struct {
 }
 
 // AnalyzeUserDiaries は特定のユーザーの日記を分析する
-func (u *DiaryAnalysisUsecase) AnalyzeUserDiaries(userID string) (string, error) {
-	diaries, err := u.DiaryRepository.FindByUserID(userID)
+func (u *DiaryAnalysisUsecase) AnalyzeUserDiaries(ctx context.Context, userID string) (string, error) {
+	diaries, err := u.DiaryRepository.FindByUserID(ctx, userID)
 	if err != nil {
 		return "", err
 	}
 
 	// 日記の内容を結合
 	var diaryContents []string
-	for _, diary := range *diaries {
+	for _, diary := range diaries {
 		// 各フィールドを結合
 		entry := strings.Join([]string{
 			"ID: " + diary.ID,
@@ -119,15 +120,15 @@ func (u *DiaryAnalysisUsecase) AnalyzeUserDiaries(userID string) (string, error)
 }
 
 // AnalyzeDiary は日記の内容を分析する
-func (u *DiaryAnalysisUsecase) AnalyzeAllDiaries() (string, error) {
-	diaries, err := u.DiaryRepository.FindAll()
+func (u *DiaryAnalysisUsecase) AnalyzeAllDiaries(ctx context.Context) (string, error) {
+	diaries, err := u.DiaryRepository.FindAll(ctx)
 	if err != nil {
 		return "", err
 	}
 
 	// 日記の内容を結合
 	var diaryContents []string
-	for _, diary := range *diaries {
+	for _, diary := range diaries {
 		// 各フィールドを結合
 		entry := strings.Join([]string{
 			"ID: " + diary.ID,
