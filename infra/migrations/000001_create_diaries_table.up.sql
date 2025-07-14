@@ -1,7 +1,5 @@
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-
 CREATE TABLE IF NOT EXISTS diaries (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id uuid PRIMARY KEY,
     user_id uuid NOT NULL,
     date DATE NOT NULL,
     mental INTEGER NOT NULL,

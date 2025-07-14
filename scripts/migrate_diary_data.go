@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -11,6 +12,8 @@ import (
 	"tofunote-backend/domain/diary"
 	"tofunote-backend/infra"
 	"tofunote-backend/repositories"
+
+	"github.com/cmackenzie1/go-uuid"
 )
 
 type DiaryEntry struct {
@@ -32,8 +35,14 @@ func main() {
 
 	log.Printf("解析された日記エントリ数: %d", len(entries))
 
+	// ユーザーIDをUUIDv7で生成
+	userUUID, err := uuid.NewV7()
+	if err != nil {
+		log.Fatalf("ユーザーUUID生成に失敗: %v", err)
+	}
+	userID := userUUID.String()
+
 	// データベースに移行
-	userID := 1 // デフォルトのユーザーID
 	successCount := 0
 	errorCount := 0
 
@@ -64,7 +73,7 @@ func main() {
 		}
 
 		// データベースに保存
-		err = diaryRepo.Create(diaryEntry)
+		err = diaryRepo.Create(context.Background(), diaryEntry)
 		if err != nil {
 			log.Printf("日記の保存に失敗しました (日付: %s): %v", entry.Date, err)
 			errorCount++

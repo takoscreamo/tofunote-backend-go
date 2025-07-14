@@ -6,11 +6,11 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/aws/aws-lambda-go v1.49.0
 	github.com/awslabs/aws-lambda-go-api-proxy v0.16.2
+	github.com/cmackenzie1/go-uuid v1.2.0
 	github.com/gin-contrib/cors v1.7.5
 	github.com/gin-gonic/gin v1.10.1
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/go-cmp v0.7.0
-	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	github.com/stretchr/testify v1.10.0

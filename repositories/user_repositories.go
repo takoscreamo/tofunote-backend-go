@@ -4,7 +4,7 @@ import (
 	"context"
 	"tofunote-backend/domain/user"
 
-	"github.com/google/uuid"
+	"github.com/cmackenzie1/go-uuid"
 	"gorm.io/gorm"
 )
 
@@ -55,7 +55,11 @@ func (r *UserRepository) Update(ctx context.Context, u *user.User) error {
 
 func (r *UserRepository) Create(ctx context.Context, u *user.User) error {
 	if u.ID == "" {
-		u.ID = uuid.New().String()
+		id, err := uuid.NewV7()
+		if err != nil {
+			return err
+		}
+		u.ID = id.String()
 	}
 	return r.db.WithContext(ctx).Create(u).Error
 }

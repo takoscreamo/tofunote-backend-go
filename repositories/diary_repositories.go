@@ -7,6 +7,7 @@ import (
 	"tofunote-backend/domain/diary"
 	"tofunote-backend/infra/db"
 
+	"github.com/cmackenzie1/go-uuid"
 	"gorm.io/gorm"
 )
 
@@ -69,6 +70,13 @@ func (r *DiaryRepository) FindByUserIDAndDateRange(ctx context.Context, userID s
 }
 
 func (r *DiaryRepository) Create(ctx context.Context, diary *diary.Diary) error {
+	if diary.ID == "" {
+		id, err := uuid.NewV7()
+		if err != nil {
+			return err
+		}
+		diary.ID = id.String()
+	}
 	model := db.FromDomain(diary)
 	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
 		// 複合ユニークキー制約違反のエラーハンドリング
