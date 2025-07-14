@@ -11,6 +11,7 @@
 - データベース: PostgreSQL（開発時はSQLiteも利用可）
 - ORM: GORM
 - マイグレーション: golang-migrate
+- UUID: UUIDv7（Go側で生成、DBはuuid型、github.com/cmackenzie1/go-uuid使用）
 - APIドキュメント: Swagger / OpenAPI
 - コンテナ: Docker, Docker Compose
 - テスト: Go標準testing, テーブル駆動テスト
@@ -195,7 +196,9 @@ make dev
 migrate -path ./infra/migrations -database "postgres://ginuser:ginpassword@localhost:5432/tofunote?sslmode=disable" up
 migrate -path ./infra/migrations -database "postgres://ginuser:ginpassword@localhost:5432/tofunote?sslmode=disable" down
 ```
-- usersテーブル追加後は必ずマイグレーションを実行
+- usersテーブル・diariesテーブルのidカラムは「uuid型・UUIDv7（Go側で生成）」で運用しています。
+- DBのデフォルト値（gen_random_uuid）は使わず、GoコードでUUIDv7を生成して明示的にINSERTします。
+- 使用ライブラリ: github.com/cmackenzie1/go-uuid
 - エラー時は `Dirty database version` などをforceコマンドで復旧
 
 ---

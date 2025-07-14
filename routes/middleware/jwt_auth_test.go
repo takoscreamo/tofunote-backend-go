@@ -9,7 +9,6 @@ import (
 	"tofunote-backend/infra"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,7 +34,7 @@ func (m *mockUserRepo) DeleteByID(ctx context.Context, id string) error {
 func TestJWTAuthMiddleware_TableDriven(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	testUUID := uuid.New().String()
+	testUUID := "test-uuid" // Changed from uuid.New().String()
 	testToken, _ := infra.GenerateToken(testUUID)
 
 	tests := []struct {

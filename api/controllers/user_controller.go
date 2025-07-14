@@ -9,8 +9,8 @@ import (
 
 	"tofunote-backend/usecases"
 
+	"github.com/cmackenzie1/go-uuid"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 type UserController struct {
@@ -51,7 +51,12 @@ func generateRefreshToken() (string, error) {
 
 // GuestLogin: サーバー側でUUIDとリフレッシュトークンを生成し、ユーザー作成・トークン発行API
 func (c *UserController) GuestLogin(ctx *gin.Context) {
-	newUUID := uuid.New().String()
+	id, err := uuid.NewV7()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "UUID生成に失敗しました"})
+		return
+	}
+	newUUID := id.String()
 	refreshToken, err := generateRefreshToken()
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "リフレッシュトークン生成に失敗しました"})

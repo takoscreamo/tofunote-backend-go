@@ -8,7 +8,7 @@ import (
 
 type DiaryModel struct {
 	gorm.Model
-	ID     string `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()"`
+	ID     string `gorm:"primaryKey;type:uuid"`
 	UserID string `gorm:"not null;type:uuid;uniqueIndex:idx_user_date,priority:1" json:"user_id"`
 	Date   string `gorm:"not null;type:date;uniqueIndex:idx_user_date,priority:2" json:"date"`
 	Mental int    `gorm:"not null;type:integer" json:"mental"`

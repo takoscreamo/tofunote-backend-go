@@ -5,7 +5,7 @@ import (
 )
 
 type UserModel struct {
-	ID           string    `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	ID           string    `gorm:"primaryKey;type:uuid"`
 	Nickname     string    `gorm:"type:varchar(255)"`
 	Provider     string    `gorm:"type:varchar(50)"`
 	ProviderID   string    `gorm:"type:varchar(255)"`
